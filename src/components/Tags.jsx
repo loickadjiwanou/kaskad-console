@@ -13,9 +13,16 @@ export function AppStatusTag({ status }) {
 
 const VERSION_STATUS_COLOR = { draft: "default", published: "success", archived: "warning", scheduled: "processing" };
 
-/** Statut d'une version ; programmée : date et heure de mise en ligne. */
-export function VersionStatusTag({ status, scheduledAt }) {
+/** Statut d'une version ; programmée : date et heure de mise en ligne ; `appHidden` : app non publiée (rien n'est téléchargeable). */
+export function VersionStatusTag({ status, scheduledAt, appHidden = false }) {
     const { t } = useI18n();
+    if (status === "published" && appHidden) {
+        return (
+            <Tooltip title={t("status.version.approvedHiddenHelp")}>
+                <Tag color="gold">{t("status.version.approvedHidden")}</Tag>
+            </Tooltip>
+        );
+    }
     if (status === "scheduled") {
         return (
             <Tag color="processing" icon={<ClockCircleOutlined />}>

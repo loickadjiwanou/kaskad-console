@@ -58,7 +58,11 @@ export function useAppReview() {
         approveStatus: (app) =>
             modal.confirm({
                 title: t(`review.status.approveTitle.${app.status_request.status}`),
-                content: t(`apps.confirmStatus.${app.status_request.status}.content`),
+                // Publication d'une app sans version téléchargeable : l'administrateur est averti
+                content:
+                    app.status_request.status === "published" && !app.latest_version_name
+                        ? t("apps.confirmStatus.noVersion")
+                        : t(`apps.confirmStatus.${app.status_request.status}.content`),
                 okText: t("review.approve"),
                 onOk: () => exec(() => api.approveStatusRequest(app.id), t(`apps.statusChanged.${app.status_request.status}`)),
             }),

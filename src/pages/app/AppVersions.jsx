@@ -10,6 +10,7 @@ import { ReviewTag } from "@/components/review/ReviewBanner";
 import VersionPrimaryAction from "@/components/versions/VersionPrimaryAction";
 import { canPublish, isPending, isScanning, useVersionActions } from "@/components/versions/useVersionActions";
 import { useAuth } from "@/auth/AuthContext";
+import { useAppReview } from "@/components/review/useAppReview";
 import { useI18n } from "@/i18n";
 import { formatBytes, formatDateTime, formatNumber } from "@/lib/format";
 import { useApiError } from "@/lib/useApiError";
@@ -89,6 +90,44 @@ function TestersCard({ app }) {
 }
 
 /** Versions d'une app : upload, suivi de l'analyse de sécurité, publication manuelle après validation. */
+/**
+ * App pas encore publiée (ou dépubliée) : les versions validées ne sont pas téléchargeables dans le store.
+ * Indique la prochaine étape : demander la publication (membre), la publier (administrateur) ou attendre la décision.
+ */
+function AppHiddenBanner({ app, versions }) {
+    const { t } = useI18n();
+    const { isFullAdmin, canWrite } = useAuth();
+    const review = useAppReview();
+    if (app.status === "published") return null;
+    const approved = versions.filter((v) => v.status === "published" || v.status === "scheduled").length;
+    const pending = app.status_request?.state === "pending" && app.status_request.status === "published";
+    const action = !canWrite ? null : isFullAdmin ? (
+        <Button size="small" type="primary" onClick={() => review.changeStatus(app, "published")}>
+            {t("apps.actions.published")}
+        </Button>
+    ) : pending ? null : (
+        <Button size="small" type="primary" onClick={() => review.changeStatus(app, "published")}>
+            {t("review.status.request.published")}
+        </Button>
+    );
+    return (
+        <Alert
+            type={approved ? "warning" : "info"}
+            showIcon
+            style={{ marginBottom: 16 }}
+            title={t(app.status === "archived" ? "versions.hidden.archivedTitle" : "versions.hidden.title")}
+            description={
+                pending
+                    ? t("versions.hidden.pending")
+                    : approved
+                      ? t("versions.hidden.approved", { count: approved })
+                      : t("versions.hidden.steps")
+            }
+            action={action}
+        />
+    );
+}
+
 export default function AppVersions({ app }) {
     const { t } = useI18n();
     const actions = useVersionActions();
@@ -132,7 +171,7 @@ export default function AppVersions({ app }) {
             key: "status",
             render: (_, v) => (
                 <Flex gap={4} wrap>
-                    <VersionStatusTag status={v.status} scheduledAt={v.scheduled_at} />
+                    <VersionStatusTag status={v.status} scheduledAt={v.scheduled_at} appHidden={app.status !== "published"} />
                     <ChannelTag channel={v.channel} />
                     {(v.status === "draft" || isPending(v) || v.review?.state === "rejected") && <ReviewTag review={v.review} />}
                 </Flex>
@@ -173,6 +212,7 @@ export default function AppVersions({ app }) {
 
     return (
         <>
+            <AppHiddenBanner app={app} versions={versions} />
             <TestersCard app={app} key={(app.testers ?? []).join(",")} />
             {canWrite && ready.length > 0 && (
                 <Alert

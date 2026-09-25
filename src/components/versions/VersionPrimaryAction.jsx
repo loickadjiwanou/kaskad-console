@@ -49,7 +49,7 @@ export default function VersionPrimaryAction({ version: v, actions, ctx, size = 
                 {t("review.withdraw")}
             </Button>
         ) : (
-            <Button size={size} onClick={() => actions.submit(v)}>
+            <Button size={size} onClick={() => actions.submit(v, ctx)}>
                 {t("release.requestPromotion")}
             </Button>
         );

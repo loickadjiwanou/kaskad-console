@@ -152,6 +152,8 @@ Header: icon, name, status tag, short description, **"Public page"** button, "Pr
 - Upload progress, then automatic security scan.
 
 ### Version list
+- **App not published yet:** banner explaining the next step (including closed testing: approved beta versions can already be installed by the testers) ("1 version is approved but nothing can be downloaded until the app is published") with a **Request publishing** button (or **Publish** for the platform admin), and "publication under review" once requested; approved versions are tagged **Approved** instead of Published while the app isn't in the store.
+- Submitting a version of an unpublished app reminds that the app's publication must also be requested.
 - Version, platform · format, size, scan status (queued / scanning / passed / rejected), status (not published / scheduled with date / published / archived), **Beta** tag, review tag (in review / approved / rejected), downloads, upload date.
 - "Show archived" switch.
 - Banners: versions ready to submit / to publish, submissions waiting for approval (admin).
@@ -283,7 +285,10 @@ All emails are sent through Brevo, in French or English:
 | Team invitation | Invited person | Console language at sending |
 | Beta tester invitation | New tester | Console language at sending |
 | "To review" | Platform admin | Admin's console language |
-| Version published / rejected / scheduled, request approved / rejected, listing published / rejected | Author of the request | Author's console language |
+| Version approved: "available in the store" only when the app is published, otherwise "not downloadable yet — request the app's publication"; beta for testers; promoted; scheduled; rejected | Author of the request (account owner for an API key) | Author's console language |
+| App published (or published without any downloadable version) / unpublished / back to draft; request rejected | Author of the request, or the account owner for a direct decision of the platform admin | Recipient's console language |
+| Listing published / rejected | Author of the request, or the account owner | Recipient's console language |
+| Security scan failed (with details), automatic submission blocked (not enough testers) | Person who uploaded the version (account owner for an API key) | Recipient's console language |
 | Account suspended / reactivated | Owner | Owner's console language |
 | Reply to a review | Reviewer (client app user) | Language of the review |
 | App reported | Platform admin | Admin's console language |

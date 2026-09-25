@@ -38,7 +38,7 @@ export default {
     periods: { "7d": "7 jours", "30d": "30 jours", "90d": "90 jours", "12m": "12 mois", custom: "Personnalisée" },
     status: {
         app: { draft: "Brouillon", published: "Publiée", archived: "Dépubliée" },
-        version: { draft: "Non publiée", published: "Publiée", archived: "Archivée", scheduled: "Programmée", scheduledAt: "Programmée · {{date}}" },
+        version: { draft: "Non publiée", published: "Publiée", archived: "Archivée", scheduled: "Programmée", scheduledAt: "Programmée · {{date}}", approvedHidden: "Validée", approvedHiddenHelp: "Version validée, mais pas téléchargeable : l'application n'est pas publiée dans le store." },
         scan: { pending: "En attente", scanning: "Analyse en cours", passed: "Validée", failed: "Rejetée" },
     },
 
@@ -111,7 +111,7 @@ export default {
         listingTranslationHelp: "Facultatif : un champ laissé vide est affiché en {{lang}}.",
         testers_one: "Testeurs de la bêta ({{count}})",
         testers_other: "Testeurs de la bêta ({{count}})",
-        testersHelp: "Adresses e-mail des comptes de l'app Kaskad qui voient les versions bêta. Chaque nouveau testeur reçoit un e-mail d'invitation expliquant comment y accéder.",
+        testersHelp: "Adresses e-mail des comptes de l'app Kaskad qui voient les versions bêta. Chaque nouveau testeur reçoit un e-mail d'invitation expliquant comment y accéder. Test fermé : tant que l'application n'est pas publiée, ses testeurs peuvent déjà installer ses versions bêta validées (elle reste invisible dans le store pour les autres).",
         testersPlaceholder: "Saisissez des adresses e-mail (Entrée, virgule ou espace pour valider)",
         testersSaved_one: "{{count}} testeur enregistré",
         testersSaved_other: "{{count}} testeurs enregistrés",
@@ -218,6 +218,14 @@ export default {
     },
 
     versions: {
+        hidden: {
+            title: "L'application n'est pas encore publiée dans le store",
+            archivedTitle: "L'application est dépubliée : elle n'est plus visible dans le store",
+            steps: "Pour la rendre disponible : 1) envoyez une version et soumettez-la à validation, 2) demandez la publication de l'application. Les deux demandes peuvent être faites en même temps. Vous pouvez aussi la faire tester avant : une version bêta validée est installable par vos testeurs même si l'application n'est pas publiée.",
+            approved_one: "{{count}} version est validée mais aucune n'est téléchargeable tant que l'application n'est pas publiée : demandez sa publication.",
+            approved_other: "{{count}} versions sont validées mais aucune n'est téléchargeable tant que l'application n'est pas publiée : demandez sa publication.",
+            pending: "La publication de l'application est en cours de validation : ses versions validées seront téléchargeables dès son approbation.",
+        },
         title: "Versions",
         empty: "Aucune version. Envoyez un premier fichier.",
         showArchived: "Afficher les archivées",
@@ -337,6 +345,7 @@ export default {
         version: {
             submitTitle: "Soumettre la version {{version}} ?",
             submitText: "L'administrateur de la plateforme vérifiera la version (fichier, analyse, notes de version) avant de la publier.",
+            submitAppHidden: "Votre application n'est pas encore publiée : une fois la version validée, demandez aussi la publication de l'application pour qu'elle soit téléchargeable dans le store.",
             readyToSubmit_one: "{{count}} version validée par l'analyse peut être soumise pour validation.",
             readyToSubmit_other: "{{count}} versions validées par l'analyse peuvent être soumises pour validation.",
             awaiting_one: "{{count}} version soumise attend votre validation.",

@@ -38,7 +38,7 @@ export default {
     periods: { "7d": "7 days", "30d": "30 days", "90d": "90 days", "12m": "12 months", custom: "Custom" },
     status: {
         app: { draft: "Draft", published: "Published", archived: "Unpublished" },
-        version: { draft: "Not published", published: "Published", archived: "Archived", scheduled: "Scheduled", scheduledAt: "Scheduled · {{date}}" },
+        version: { draft: "Not published", published: "Published", archived: "Archived", scheduled: "Scheduled", scheduledAt: "Scheduled · {{date}}", approvedHidden: "Approved", approvedHiddenHelp: "Approved version, but not downloadable: the app isn't published in the store." },
         scan: { pending: "Queued", scanning: "Scanning", passed: "Passed", failed: "Rejected" },
     },
 
@@ -111,7 +111,7 @@ export default {
         listingTranslationHelp: "Optional: an empty field is shown in {{lang}}.",
         testers_one: "Beta testers ({{count}})",
         testers_other: "Beta testers ({{count}})",
-        testersHelp: "Email addresses of Kaskad app accounts that see beta versions. Each new tester receives an invitation email explaining how to access them.",
+        testersHelp: "Email addresses of Kaskad app accounts that see beta versions. Each new tester receives an invitation email explaining how to access them. Closed testing: while the app isn't published, its testers can already install its approved beta versions (it stays invisible in the store for everyone else).",
         testersPlaceholder: "Type email addresses (Enter, comma or space to confirm)",
         testersSaved_one: "{{count}} tester saved",
         testersSaved_other: "{{count}} testers saved",
@@ -218,6 +218,14 @@ export default {
     },
 
     versions: {
+        hidden: {
+            title: "The app isn't published in the store yet",
+            archivedTitle: "The app is unpublished: it's no longer visible in the store",
+            steps: "To make it available: 1) upload a version and submit it for review, 2) request the app's publication. Both requests can be made at the same time. You can also have it tested first: an approved beta version can be installed by your testers even while the app isn't published.",
+            approved_one: "{{count}} version is approved but nothing can be downloaded until the app is published: request its publication.",
+            approved_other: "{{count}} versions are approved but nothing can be downloaded until the app is published: request its publication.",
+            pending: "The app's publication is under review: its approved versions will be downloadable as soon as it's approved.",
+        },
         title: "Versions",
         empty: "No versions. Upload a first file.",
         showArchived: "Show archived",
@@ -337,6 +345,7 @@ export default {
         version: {
             submitTitle: "Submit version {{version}}?",
             submitText: "The platform admin will check the version (file, scan, release notes) before publishing it.",
+            submitAppHidden: "Your app isn't published yet: once the version is approved, also request the app's publication so it can be downloaded from the store.",
             readyToSubmit_one: "{{count}} version passed the scan and can be submitted for review.",
             readyToSubmit_other: "{{count}} versions passed the scan and can be submitted for review.",
             awaiting_one: "{{count}} submitted version is waiting for your approval.",

@@ -105,7 +105,7 @@ export function useVersionActions() {
         archive: (v, ctx) => confirm("archive", v, () => api.archiveVersion(v.id), ctx),
         rescan: (v, ctx) => confirm("rescan", v, () => api.rescanVersion(v.id), ctx),
         // Soumission : note et date de mise en ligne souhaitée ; bêta en ligne → demande de passage en production
-        submit: (v) =>
+        submit: (v, { appStatus } = {}) =>
             v.status === "published"
                 ? prompt({
                       title: t("release.requestPromotionTitle", { version: v.version_name }),
@@ -117,7 +117,11 @@ export function useVersionActions() {
                   })
                 : prompt({
                       title: t("review.version.submitTitle", { version: v.version_name }),
-                      text: t("review.version.submitText"),
+                      // App pas encore publiée : la version validée ne sera téléchargeable qu'après la publication de l'app
+                      text:
+                          appStatus && appStatus !== "published"
+                              ? `${t("review.version.submitText")} ${t("review.version.submitAppHidden")}`
+                              : t("review.version.submitText"),
                       label: t("review.note"),
                       placeholder: t("review.notePlaceholder"),
                       okText: t("review.submit"),
