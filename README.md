@@ -1,35 +1,34 @@
 # Kaskad — Admin console
 
 The web console used by the Kaskad team to manage the catalog: app pages, versions, security scan review, publishing and download statistics.
-Access is restricted to team accounts created in the console (there is no public sign-up).
+Anyone can **create a developer account** (sign up, then confirm the email address) and invite their team. Publications are reviewed by the platform admin before going live, like Google Play Console.
 
 ## Features
 
 - **Dashboard:** published apps, total downloads, versions waiting for review, downloads chart, most downloaded apps, latest releases
 - **Apps:** create and edit app pages (texts, categories, target platforms, featured flag, Android package name), icon and screenshots (drag to reorder), status (draft / published / unpublished), preview of the page as shown in the client app
 - **Versions:** upload with a metadata form (version number, version code, platform, format, release notes), upload progress, live security scan status (queued / scanning / passed / rejected), full scan report, **manual publishing only after the scan has passed**, archive, rescan, download
-- **Moderation:** review requests from editors (approve / reject with a reason) and queue of versions being scanned, ready or rejected
+- **Moderation** (platform admin): review requests from developers (approve / reject with a reason) and queue of versions being scanned, ready or rejected
 - **Categories:** create, edit (name + icon), reorder by drag and drop, delete (apps are moved to another category), move apps between categories
 - **Statistics:** downloads by period (preset or custom range, daily / weekly / monthly), per app and per version, breakdown by platform and format, CSV export
 - **Activity log:** who did what and when, filtered by type or member
-- **Team** (full admins only): add members, change roles (full admin / content editor), deactivate accounts, reset passwords
+- **Team** (account owner): invite members by email, change roles (developer / viewer), deactivate access, rename the account
+- **Developer accounts** (platform admin): every registered account with its owner, members and apps
 - Light / dark / system theme, French and English
 
-### Roles and review workflow
+### Accounts, roles and review workflow
 
-| Role | Access |
-|---|---|
-| Full admin | Everything: approves and publishes, manages the team. The first one is the backend's `ADMIN_EMAIL` account |
-| Content editor | Prepares apps, listings and versions, and **submits them for review**; no access to the Team page |
+- **Sign up** creates a developer account; its creator is the **owner**. A confirmation email (Brevo) is sent in the console's current language; the link signs the user in.
+- **Team** (owner): invite people by email as **Developer** (creates and edits apps, uploads versions, submits for review) or **Viewer** (read-only). The invitation email uses the console's language at the time of sending; the link opens a page where the person chooses a name and password.
+- Each account only sees its own apps, statistics, moderation queue and activity log.
+- The **platform admin** (the backend's `ADMIN_EMAIL`, unique, never assignable) sees every account. Only they see the *Moderation*, *Categories* and *Developer accounts* menus.
 
-Like Google Play Console, nothing goes live without a full admin:
+Nothing goes live without the platform admin:
 
-- **Versions:** once the security scan has passed, an editor clicks *Submit for review*. A full admin *approves and publishes* or *rejects* it with a reason.
-- **App status:** editors *request* publishing / unpublishing; a full admin approves or rejects the request.
-- **Listing of a live app:** an editor's changes (texts, icon, screenshots, categories…) are saved as a *listing draft*, invisible to users, with a preview. The editor submits it; a full admin publishes or rejects it.
-- The **Moderation › Review requests** tab lists every pending and rejected request. Editors see the rejection reason, fix the item and submit again.
-
-Full admins publish directly: their action is the approval.
+- **Versions:** once the security scan has passed, a developer clicks *Submit for review*; the admin *approves and publishes* or *rejects* it with a reason.
+- **App status:** developers *request* publishing / unpublishing; the admin approves or rejects.
+- **Listing of a live app:** changes are saved as a *listing draft*, invisible to users, with a preview; the admin publishes or rejects it.
+- The platform admin works from **Moderation** (review requests and security scan queue). Developers follow their requests directly on each app: *In review* / *Rejected* banners with the reason, version tags and scan status.
 
 ## Getting started
 

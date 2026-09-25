@@ -16,12 +16,20 @@ export function AuthProvider({ children }) {
             .catch(() => {});
     }, []);
 
+    const role = session?.admin?.role;
     const value = useMemo(
         () => ({
             admin: session?.admin ?? null,
+            account: session?.admin?.account ?? null,
             isAuthenticated: !!session?.access_token,
-            isFullAdmin: session?.admin?.role === "admin",
+            // Administrateur de la plateforme (unique) : valide et publie, gère les catégories et voit tous les comptes
+            isFullAdmin: role === "admin",
+            // Propriétaire / développeur : gèrent les apps ; lecteur : consultation seule
+            canWrite: ["admin", "owner", "developer"].includes(role),
+            canManageTeam: ["admin", "owner"].includes(role),
             login: async (email, password) => setSession(await api.login(email.trim().toLowerCase(), password)),
+            // Session ouverte après confirmation d'e-mail ou acceptation d'invitation
+            startSession: (next) => setSession(next),
             logout: async () => {
                 const refresh = getSession()?.refresh_token;
                 if (refresh) await api.logout(refresh).catch(() => {});
@@ -29,7 +37,7 @@ export function AuthProvider({ children }) {
             },
             setAdmin: (admin) => setSession({ ...getSession(), admin }),
         }),
-        [session],
+        [session, role],
     );
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

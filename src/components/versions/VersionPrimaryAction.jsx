@@ -9,8 +9,8 @@ import { canPublish, canSubmit, isPending, isScanning } from "./useVersionAction
  */
 export default function VersionPrimaryAction({ version: v, actions, ctx, size = "small" }) {
     const { t } = useI18n();
-    const { isFullAdmin } = useAuth();
-    if (v.status !== "draft") return null;
+    const { isFullAdmin, canWrite } = useAuth();
+    if (v.status !== "draft" || !canWrite) return null;
 
     if (!canPublish(v)) {
         return (

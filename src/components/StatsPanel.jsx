@@ -4,6 +4,7 @@ import { DownloadOutlined } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { api } from "@/api";
+import { useAuth } from "@/auth/AuthContext";
 import AppIcon from "./AppIcon";
 import BreakdownChart from "./BreakdownChart";
 import DownloadsChart from "./DownloadsChart";
@@ -19,6 +20,9 @@ import { useApiError } from "@/lib/useApiError";
  */
 export default function StatsPanel({ appId: fixedAppId }) {
     const { t } = useI18n();
+    const { isFullAdmin } = useAuth();
+    // Administrateur de la plateforme : toute la plateforme ou un compte développeur ; membres : leur compte (côté API)
+    const [accountId, setAccountId] = useState(null);
     const { message } = App.useApp();
     const onError = useApiError();
     const [period, setPeriod] = useState("30d");
@@ -40,9 +44,14 @@ export default function StatsPanel({ appId: fixedAppId }) {
         return periodRange(period === "custom" ? "30d" : period);
     }, [period, custom]);
     const effectiveInterval = interval ?? range.interval;
-    const base = { from: range.from, to: range.to };
+    const base = { from: range.from, to: range.to, account_id: fixedAppId ? undefined : (accountId ?? undefined) };
 
-    const { data: apps } = useQuery({ queryKey: ["apps", "all-names"], queryFn: () => api.apps({ limit: 100 }), enabled: !fixedAppId });
+    const { data: apps } = useQuery({
+        queryKey: ["apps", "all-names", accountId],
+        queryFn: () => api.apps({ limit: 200, account_id: accountId ?? undefined }),
+        enabled: !fixedAppId,
+    });
+    const { data: accounts } = useQuery({ queryKey: ["accounts"], queryFn: api.accounts, enabled: isFullAdmin && !fixedAppId });
     const { data: versions = [] } = useQuery({ queryKey: ["versions", appId], queryFn: () => api.versions(appId), enabled: !!appId });
     const versionNames = Object.fromEntries(versions.map((v) => [v.id, v]));
 
@@ -109,6 +118,22 @@ export default function StatsPanel({ appId: fixedAppId }) {
                             style={{ width: 150 }}
                             options={["day", "week", "month"].map((i) => ({ value: i, label: t(`stats.interval.${i}`) }))}
                         />
+                        {isFullAdmin && !fixedAppId && (
+                            <Select
+                                allowClear
+                                showSearch
+                                optionFilterProp="label"
+                                placeholder={t("stats.allAccounts")}
+                                value={accountId}
+                                onChange={(id) => {
+                                    setAccountId(id ?? null);
+                                    setAppId(null);
+                                    setVersionId(null);
+                                }}
+                                style={{ minWidth: 200 }}
+                                options={(accounts ?? []).map((a) => ({ value: a.id, label: a.name }))}
+                            />
+                        )}
                         {!fixedAppId && (
                             <Select
                                 allowClear

@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Alert, App, Button, Card, Checkbox, Col, Flex, Form, Input, Row, Select, Switch, Typography } from "antd";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/api";
+import { useAuth } from "@/auth/AuthContext";
 import MdiIcon from "@/components/MdiIcon";
 import { useI18n } from "@/i18n";
 import { PLATFORMS } from "@/lib/format";
@@ -16,6 +17,7 @@ const FIELDS = ["name", "short_description", "long_description", "category_ids",
 export default function AppInfoForm({ app }) {
     const listing = app.draft ?? app;
     const liveApp = app.status === "published" && !app.draft;
+    const { canWrite } = useAuth();
     const { t } = useI18n();
     const { message } = App.useApp();
     const onError = useApiError();
@@ -41,8 +43,8 @@ export default function AppInfoForm({ app }) {
     });
 
     return (
-        <Form form={form} layout="vertical" onFinish={(v) => save.mutate(v)} requiredMark="optional">
-            {liveApp && <Alert type="info" showIcon title={t("review.listing.liveNotice")} style={{ marginBottom: 16 }} />}
+        <Form form={form} layout="vertical" onFinish={(v) => save.mutate(v)} requiredMark="optional" disabled={!canWrite}>
+            {liveApp && canWrite && <Alert type="info" showIcon title={t("review.listing.liveNotice")} style={{ marginBottom: 16 }} />}
             <Row gutter={16}>
                 <Col xs={24} xl={16}>
                     <Card title={t("apps.sections.texts")}>
@@ -95,7 +97,7 @@ export default function AppInfoForm({ app }) {
                     </Card>
                 </Col>
             </Row>
-            <Flex justify="flex-end" gap={8} style={{ marginTop: 16 }}>
+            <Flex justify="flex-end" gap={8} style={{ marginTop: 16, display: canWrite ? "flex" : "none" }}>
                 <Form.Item shouldUpdate noStyle>
                     {() => (
                         <>

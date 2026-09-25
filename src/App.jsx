@@ -6,7 +6,9 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-route
 import { AuthProvider, useAuth } from "@/auth/AuthContext";
 import { I18nProvider, useI18n } from "@/i18n";
 import AppLayout from "@/layout/AppLayout";
+import AcceptInvite from "@/pages/AcceptInvite";
 import Account from "@/pages/Account";
+import Accounts from "@/pages/Accounts";
 import Activity from "@/pages/Activity";
 import AppDetail from "@/pages/AppDetail";
 import AppsList from "@/pages/AppsList";
@@ -15,8 +17,10 @@ import Dashboard from "@/pages/Dashboard";
 import Login from "@/pages/Login";
 import Moderation from "@/pages/Moderation";
 import NotFound from "@/pages/NotFound";
+import Signup from "@/pages/Signup";
 import Stats from "@/pages/Stats";
 import Team from "@/pages/Team";
+import VerifyEmail from "@/pages/VerifyEmail";
 import { antdThemeFor, ThemeModeProvider, useThemeMode } from "@/theme";
 
 const queryClient = new QueryClient({
@@ -33,6 +37,11 @@ function RequireAuth({ children }) {
 function RequireFullAdmin({ children }) {
     const { isFullAdmin } = useAuth();
     return isFullAdmin ? children : <Navigate to="/" replace />;
+}
+
+function RequireTeamManager({ children }) {
+    const { canManageTeam } = useAuth();
+    return canManageTeam ? children : <Navigate to="/" replace />;
 }
 
 function Themed({ children }) {
@@ -55,6 +64,9 @@ export default function App() {
                             <BrowserRouter>
                                 <Routes>
                                     <Route path="/login" element={<Login />} />
+                                    <Route path="/signup" element={<Signup />} />
+                                    <Route path="/verify-email" element={<VerifyEmail />} />
+                                    <Route path="/invite/:token" element={<AcceptInvite />} />
                                     <Route
                                         element={
                                             <RequireAuth>
@@ -65,15 +77,37 @@ export default function App() {
                                         <Route index element={<Dashboard />} />
                                         <Route path="apps" element={<AppsList />} />
                                         <Route path="apps/:id" element={<AppDetail />} />
-                                        <Route path="moderation" element={<Moderation />} />
-                                        <Route path="categories" element={<Categories />} />
+                                        <Route
+                                            path="moderation"
+                                            element={
+                                                <RequireFullAdmin>
+                                                    <Moderation />
+                                                </RequireFullAdmin>
+                                            }
+                                        />
+                                        <Route
+                                            path="categories"
+                                            element={
+                                                <RequireFullAdmin>
+                                                    <Categories />
+                                                </RequireFullAdmin>
+                                            }
+                                        />
                                         <Route path="stats" element={<Stats />} />
                                         <Route path="activity" element={<Activity />} />
                                         <Route
                                             path="team"
                                             element={
-                                                <RequireFullAdmin>
+                                                <RequireTeamManager>
                                                     <Team />
+                                                </RequireTeamManager>
+                                            }
+                                        />
+                                        <Route
+                                            path="accounts"
+                                            element={
+                                                <RequireFullAdmin>
+                                                    <Accounts />
                                                 </RequireFullAdmin>
                                             }
                                         />

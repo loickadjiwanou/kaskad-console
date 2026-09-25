@@ -19,7 +19,7 @@ export default function VersionDrawer({ versionId, appName, appStatus, onClose }
     const onError = useApiError();
     const queryClient = useQueryClient();
     const actions = useVersionActions();
-    const { isFullAdmin } = useAuth();
+    const { isFullAdmin, canWrite } = useAuth();
     const [form] = Form.useForm();
     const [editing, setEditing] = useState(false);
 
@@ -69,7 +69,7 @@ export default function VersionDrawer({ versionId, appName, appStatus, onClose }
                             review={v.review}
                             title={t(`review.version.banner.${v.review.state}`)}
                             actions={
-                                v.review.state === "rejected" && (
+                                canWrite && v.review.state === "rejected" && (
                                     <Button size="small" onClick={() => actions.withdraw(v)}>
                                         {t("review.dismiss")}
                                     </Button>
@@ -107,7 +107,7 @@ export default function VersionDrawer({ versionId, appName, appStatus, onClose }
                             <Typography.Title level={5} style={{ margin: 0 }}>
                                 {t("versions.fields.changelog")}
                             </Typography.Title>
-                            {!editing && (v.status !== "published" || isFullAdmin) && (
+                            {canWrite && !editing && (v.status !== "published" || isFullAdmin) && (
                                 <Button size="small" onClick={() => setEditing(true)}>
                                     {t("common.edit")}
                                 </Button>
@@ -144,7 +144,7 @@ export default function VersionDrawer({ versionId, appName, appStatus, onClose }
                             <Typography.Title level={5} style={{ margin: 0 }}>
                                 {t("versions.scanReport")}
                             </Typography.Title>
-                            {!isScanning(v) && (
+                            {canWrite && !isScanning(v) && (
                                 <Button size="small" onClick={() => actions.rescan(v, ctx)}>
                                     {t("versions.actions.rescan")}
                                 </Button>

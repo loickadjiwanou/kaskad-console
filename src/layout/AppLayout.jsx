@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Avatar, Badge, Button, Dropdown, Flex, Grid, Layout, Menu, Segmented, Tooltip, Typography } from "antd";
+import { Avatar, Badge, Button, Dropdown, Flex, Grid, Layout, Menu, Segmented, Tag, Tooltip, Typography } from "antd";
 import {
     AppstoreOutlined,
     BarChartOutlined,
@@ -11,6 +11,7 @@ import {
     MoonOutlined,
     SafetyCertificateOutlined,
     SunOutlined,
+    ShopOutlined,
     TeamOutlined,
     UserOutlined,
     DesktopOutlined,
@@ -27,7 +28,7 @@ const { Sider, Header, Content } = Layout;
 export default function AppLayout() {
     const { t, lang, setLang } = useI18n();
     const { mode, setMode } = useThemeMode();
-    const { admin, isFullAdmin, logout } = useAuth();
+    const { admin, account, isFullAdmin, canManageTeam, logout } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const screens = Grid.useBreakpoint();
@@ -36,26 +37,32 @@ export default function AppLayout() {
 
     // Nombre de versions en attente (badge du menu Modération)
     const { data: overview } = useQuery({ queryKey: ["overview"], queryFn: api.overview, refetchInterval: 30_000 });
-    // Admin complet : demandes à valider ; éditeur : versions en attente (analyse ou soumission)
-    const pending = (isFullAdmin ? overview?.reviews_pending : overview?.versions_pending_review) ?? 0;
+    // Demandes à valider (badge du menu Modération, administrateur de la plateforme)
+    const pending = overview?.reviews_pending ?? 0;
 
     const items = [
         { key: "/", icon: <DashboardOutlined />, label: t("nav.dashboard") },
         { key: "/apps", icon: <AppstoreOutlined />, label: t("nav.apps") },
-        {
-            key: "/moderation",
-            icon: <SafetyCertificateOutlined />,
-            label: (
-                <Flex justify="space-between" align="center">
-                    {t("nav.moderation")}
-                    {pending > 0 && <Badge count={pending} size="small" />}
-                </Flex>
-            ),
-        },
-        { key: "/categories", icon: <FolderOutlined />, label: t("nav.categories") },
         { key: "/stats", icon: <BarChartOutlined />, label: t("nav.stats") },
         { key: "/activity", icon: <HistoryOutlined />, label: t("nav.activity") },
-        ...(isFullAdmin ? [{ key: "/team", icon: <TeamOutlined />, label: t("nav.team") }] : []),
+        ...(canManageTeam ? [{ key: "/team", icon: <TeamOutlined />, label: t("nav.team") }] : []),
+        // Réservés à l'administrateur de la plateforme : absents du menu des comptes développeurs
+        ...(isFullAdmin
+            ? [
+                  {
+                      key: "/moderation",
+                      icon: <SafetyCertificateOutlined />,
+                      label: (
+                          <Flex justify="space-between" align="center">
+                              {t("nav.moderation")}
+                              {pending > 0 && <Badge count={pending} size="small" />}
+                          </Flex>
+                      ),
+                  },
+                  { key: "/categories", icon: <FolderOutlined />, label: t("nav.categories") },
+                  { key: "/accounts", icon: <ShopOutlined />, label: t("nav.accounts") },
+              ]
+            : []),
     ];
     const selected = items.map((i) => i.key).filter((k) => (k === "/" ? location.pathname === "/" : location.pathname.startsWith(k)));
 
@@ -130,6 +137,11 @@ export default function AppLayout() {
                             { value: "dark", icon: <Tooltip title={t("theme.dark")}><MoonOutlined /></Tooltip> },
                         ]}
                     />
+                    {admin?.role === "viewer" && (
+                        <Tooltip title={t("roles.viewerHelp")}>
+                            <Tag color="default">{t("roles.readOnly")}</Tag>
+                        </Tooltip>
+                    )}
                     <Segmented size="small" value={lang} onChange={setLang} options={[{ value: "fr", label: "FR" }, { value: "en", label: "EN" }]} />
                     <Dropdown menu={userMenu} placement="bottomRight" trigger={["click"]}>
                         <Button type="text" style={{ height: 44 }}>
@@ -139,6 +151,7 @@ export default function AppLayout() {
                                     <div style={{ textAlign: "left", lineHeight: 1.2 }}>
                                         <div style={{ fontWeight: 600 }}>{admin?.name}</div>
                                         <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                                            {account?.name ? `${account.name} · ` : ""}
                                             {t(`roles.${admin?.role}`)}
                                         </Typography.Text>
                                     </div>

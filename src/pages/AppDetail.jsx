@@ -23,7 +23,7 @@ const TRANSITIONS = { draft: ["published"], published: ["archived", "draft"], ar
 /** Demande de changement de statut en cours (éditeur → admin complet). */
 function StatusRequestBanner({ app, review }) {
     const { t } = useI18n();
-    const { admin, isFullAdmin } = useAuth();
+    const { admin, isFullAdmin, canWrite } = useAuth();
     const r = app.status_request;
     if (!r) return null;
     const mine = r.submitted_by === admin?.id;
@@ -39,6 +39,8 @@ function StatusRequestBanner({ app, review }) {
                 </Button>
             </>
         );
+    } else if (!canWrite) {
+        actions = null;
     } else if (r.state === "pending" && mine) {
         actions = (
             <Button size="small" onClick={() => review.withdrawStatus(app)}>
@@ -65,7 +67,7 @@ function StatusRequestBanner({ app, review }) {
 /** Modifications de fiche non publiées (app visible) : brouillon, soumission, validation. */
 function ListingDraftBanner({ app, review, onPreview }) {
     const { t } = useI18n();
-    const { admin, isFullAdmin } = useAuth();
+    const { admin, isFullAdmin, canWrite } = useAuth();
     if (!app.draft) return null;
     const r = app.listing_review;
     const mine = r?.submitted_by === admin?.id;
@@ -74,7 +76,7 @@ function ListingDraftBanner({ app, review, onPreview }) {
             {t("review.listing.preview")}
         </Button>
     );
-    const discard = (
+    const discard = canWrite && (
         <Button size="small" danger type="text" onClick={() => review.discardListing(app)}>
             {t("review.listing.discard")}
         </Button>
@@ -100,7 +102,7 @@ function ListingDraftBanner({ app, review, onPreview }) {
                     ) : (
                         <>
                             {preview}
-                            {mine && (
+                            {mine && canWrite && (
                                 <Button size="small" onClick={() => review.withdrawListing(app)}>
                                     {t("review.withdraw")}
                                 </Button>
@@ -112,7 +114,7 @@ function ListingDraftBanner({ app, review, onPreview }) {
         );
     }
 
-    const primary = isFullAdmin ? (
+    const primary = !canWrite ? null : isFullAdmin ? (
         <Button size="small" type="primary" onClick={() => review.publishListing(app)}>
             {t("review.listing.publish")}
         </Button>
@@ -163,7 +165,7 @@ function ListingDraftBanner({ app, review, onPreview }) {
 export default function AppDetail() {
     const { id } = useParams();
     const { t } = useI18n();
-    const { isFullAdmin } = useAuth();
+    const { isFullAdmin, canWrite } = useAuth();
     const review = useAppReview();
     const navigate = useNavigate();
     const [params, setParams] = useSearchParams();
@@ -179,7 +181,7 @@ export default function AppDetail() {
     const [primary, ...others] = TRANSITIONS[app.status];
     const label = (s) => (isFullAdmin ? t(`apps.actions.${s}`) : t(`review.status.request.${s}`));
     const statusButton =
-        !isFullAdmin && requestPending ? null : others.length ? (
+        !canWrite || (!isFullAdmin && requestPending) ? null : others.length ? (
             <Dropdown.Button
                 type={primary === "published" ? "primary" : "default"}
                 icon={<DownOutlined />}

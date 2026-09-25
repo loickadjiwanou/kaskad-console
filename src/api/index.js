@@ -8,10 +8,22 @@ export const api = {
     me: () => request("/admin/auth/me"),
     updateMe: (body) => request("/admin/auth/me", { method: "PATCH", body }),
 
-    // Équipe
-    admins: () => request("/admin/admins"),
-    createAdmin: (body) => request("/admin/admins", { method: "POST", body }),
-    updateAdmin: (id, body) => request(`/admin/admins/${id}`, { method: "PATCH", body }),
+    // Inscription (compte développeur) et confirmation d'e-mail
+    signup: (body) => request("/admin/auth/signup", { method: "POST", body }),
+    verifyEmail: (token) => request("/admin/auth/verify-email", { method: "POST", body: { token } }),
+    resendVerification: (email) => request("/admin/auth/resend-verification", { method: "POST", body: { email } }),
+
+    // Compte développeur, membres et invitations
+    renameAccount: (name) => request("/admin/account", { method: "PATCH", body: { name } }),
+    accounts: () => request("/admin/accounts"),
+    members: (accountId) => request("/admin/members", { params: { account_id: accountId } }),
+    updateMember: (id, body) => request(`/admin/members/${id}`, { method: "PATCH", body }),
+    invitations: () => request("/admin/invitations"),
+    invite: (email, role) => request("/admin/invitations", { method: "POST", body: { email, role } }),
+    resendInvitation: (id) => request(`/admin/invitations/${id}/resend`, { method: "POST" }),
+    revokeInvitation: (id) => request(`/admin/invitations/${id}`, { method: "DELETE" }),
+    lookupInvitation: (token) => request("/admin/invitations/lookup", { params: { token } }),
+    acceptInvitation: (body) => request("/admin/invitations/accept", { method: "POST", body }),
 
     // Catégories
     categories: () => request("/admin/categories"),

@@ -4,7 +4,6 @@ import { ReloadOutlined } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "@/api";
-import { useAuth } from "@/auth/AuthContext";
 import AppIcon from "@/components/AppIcon";
 import PageHeader from "@/components/PageHeader";
 import { ReviewTag } from "@/components/review/ReviewBanner";
@@ -26,7 +25,6 @@ const SCAN_GROUPS = {
 /** Demandes de validation : versions soumises, changements de statut, modifications de fiche. */
 function ReviewsTab({ reviews, loading, onOpenVersion }) {
     const { t } = useI18n();
-    const { admin, isFullAdmin } = useAuth();
     const navigate = useNavigate();
     const versionActions = useVersionActions();
     const appReview = useAppReview();
@@ -58,19 +56,6 @@ function ReviewsTab({ reviews, loading, onOpenVersion }) {
             return (
                 <>
                     <VersionPrimaryAction version={r.item} actions={versionActions} ctx={{ appName: r.appName, appStatus: r.item.app_status }} />
-                    {openBtn}
-                </>
-            );
-        }
-        if (!isFullAdmin) {
-            const mine = r.review.submitted_by === admin?.id;
-            return (
-                <>
-                    {mine && (
-                        <Button size="small" onClick={() => (r.kind === "status" ? appReview.withdrawStatus(r.item) : appReview.withdrawListing(r.item))}>
-                            {t("review.withdraw")}
-                        </Button>
-                    )}
                     {openBtn}
                 </>
             );
@@ -167,7 +152,7 @@ function ReviewsTab({ reviews, loading, onOpenVersion }) {
                     }))}
                 />
                 <Typography.Paragraph type="secondary" style={{ margin: "12px 0 0" }}>
-                    {isFullAdmin ? t("review.helpAdmin") : t("review.helpEditor")}
+                    {t("review.helpAdmin")}
                 </Typography.Paragraph>
             </div>
             <Table

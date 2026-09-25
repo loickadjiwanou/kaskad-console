@@ -9,8 +9,8 @@ import PageHeader from "@/components/PageHeader";
 import { useI18n } from "@/i18n";
 import { formatDateTime } from "@/lib/format";
 
-const ACTION_COLORS = { app: "blue", version: "purple", category: "cyan", admin: "gold" };
-const FILTERS = ["app", "version", "category", "admin"];
+const ACTION_COLORS = { app: "blue", version: "purple", category: "cyan", member: "gold", account: "magenta" };
+const FILTERS = ["app", "version", "category", "member", "account"];
 
 /** Résumé lisible des détails d'une entrée du journal. */
 function Details({ entry }) {
@@ -48,13 +48,16 @@ export default function Activity() {
     const [limit, setLimit] = useState(50);
     const [action, setAction] = useState(null);
     const [actor, setActor] = useState(null);
+    const [account, setAccount] = useState(null);
 
     const { data, isLoading } = useQuery({
-        queryKey: ["activity", page, limit, action, actor],
-        queryFn: () => api.activity({ page, limit, action, actor_id: actor }),
+        queryKey: ["activity", page, limit, action, actor, account],
+        queryFn: () => api.activity({ page, limit, action, actor_id: actor, account_id: account }),
         placeholderData: (prev) => prev,
     });
-    const { data: admins } = useQuery({ queryKey: ["admins"], queryFn: api.admins, enabled: isFullAdmin });
+    // Membres du compte (administrateur : du compte filtré, sinon du sien)
+    const { data: admins } = useQuery({ queryKey: ["members", account ?? "mine"], queryFn: () => api.members(account ?? undefined) });
+    const { data: accounts } = useQuery({ queryKey: ["accounts"], queryFn: api.accounts, enabled: isFullAdmin });
 
     const label = (a) => {
         const key = `activity.actions.${a.replace(/\./g, "_")}`;
@@ -114,16 +117,30 @@ export default function Activity() {
                     {isFullAdmin && (
                         <Select
                             allowClear
-                            placeholder={t("activity.allMembers")}
-                            value={actor}
+                            showSearch
+                            optionFilterProp="label"
+                            placeholder={t("activity.allAccounts")}
+                            value={account}
                             onChange={(v) => {
-                                setActor(v ?? null);
+                                setAccount(v ?? null);
+                                setActor(null);
                                 setPage(1);
                             }}
                             style={{ minWidth: 220 }}
-                            options={(admins ?? []).map((a) => ({ value: a.id, label: a.name }))}
+                            options={(accounts ?? []).map((a) => ({ value: a.id, label: a.name }))}
                         />
                     )}
+                    <Select
+                        allowClear
+                        placeholder={t("activity.allMembers")}
+                        value={actor}
+                        onChange={(v) => {
+                            setActor(v ?? null);
+                            setPage(1);
+                        }}
+                        style={{ minWidth: 220 }}
+                        options={(admins ?? []).map((a) => ({ value: a.id, label: a.name }))}
+                    />
                 </Flex>
                 <Table
                     key={lang}

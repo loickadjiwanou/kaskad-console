@@ -17,7 +17,7 @@ import { palette } from "@/theme";
 
 export default function Dashboard() {
     const { t } = useI18n();
-    const { admin, isFullAdmin } = useAuth();
+    const { admin, account, isFullAdmin } = useAuth();
     const navigate = useNavigate();
     const [period, setPeriod] = useState("30d");
     const range = periodRange(period);
@@ -28,7 +28,7 @@ export default function Dashboard() {
 
     return (
         <>
-            <PageHeader title={t("dashboard.title", { name: admin?.name?.split(" ")[0] ?? "" })} subtitle={t("dashboard.subtitle")} />
+            <PageHeader title={t("dashboard.title", { name: admin?.name?.split(" ")[0] ?? "" })} subtitle={isFullAdmin ? t("dashboard.subtitleAdmin") : t("dashboard.subtitle", { account: account?.name ?? "" })} />
             {isLoading ? (
                 <Skeleton active />
             ) : (
@@ -59,8 +59,8 @@ export default function Dashboard() {
                             value={formatNumber(isFullAdmin ? overview?.reviews_pending : overview?.versions_pending_review)}
                             icon={<SafetyCertificateOutlined />}
                             color={palette.tertiary.DEFAULT}
-                            footer={<Typography.Link>{t("dashboard.openModeration")}</Typography.Link>}
-                            onClick={() => navigate("/moderation")}
+                            footer={<Typography.Link>{isFullAdmin ? t("dashboard.openModeration") : t("dashboard.openApps")}</Typography.Link>}
+                            onClick={() => navigate(isFullAdmin ? "/moderation" : "/apps")}
                         />
                     </Col>
                 </Row>

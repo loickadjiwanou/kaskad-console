@@ -17,7 +17,7 @@ import { formatBytes, formatDateTime, formatNumber } from "@/lib/format";
 export default function AppVersions({ app }) {
     const { t } = useI18n();
     const actions = useVersionActions();
-    const { isFullAdmin } = useAuth();
+    const { isFullAdmin, canWrite } = useAuth();
     const [uploadOpen, setUploadOpen] = useState(false);
     const [selected, setSelected] = useState(null);
     const [showArchived, setShowArchived] = useState(false);
@@ -75,13 +75,13 @@ export default function AppVersions({ app }) {
                             items: [
                                 { key: "details", label: t("versions.actions.details") },
                                 { key: "download", label: t("versions.actions.download") },
-                                { key: "rescan", label: t("versions.actions.rescan"), disabled: isScanning(v) },
+                                { key: "rescan", label: t("versions.actions.rescan"), disabled: isScanning(v) || !canWrite },
                                 { type: "divider" },
                                 {
                                     key: "archive",
                                     label: t("versions.actions.archive"),
                                     danger: true,
-                                    disabled: v.status === "archived" || (v.status === "published" && !isFullAdmin),
+                                    disabled: !canWrite || v.status === "archived" || (v.status === "published" && !isFullAdmin),
                                 },
                             ],
                             onClick: ({ key }) => (key === "details" ? setSelected(v.id) : actions[key](v, ctx)),
@@ -96,7 +96,7 @@ export default function AppVersions({ app }) {
 
     return (
         <>
-            {ready.length > 0 && (
+            {canWrite && ready.length > 0 && (
                 <Alert
                     type="success"
                     showIcon
@@ -115,7 +115,7 @@ export default function AppVersions({ app }) {
                             <Switch size="small" checked={showArchived} onChange={setShowArchived} />
                             <Typography.Text type="secondary">{t("versions.showArchived")}</Typography.Text>
                         </Flex>
-                        <Button type="primary" icon={<CloudUploadOutlined />} onClick={() => setUploadOpen(true)}>
+                        <Button type="primary" icon={<CloudUploadOutlined />} onClick={() => setUploadOpen(true)} style={{ display: canWrite ? undefined : "none" }}>
                             {t("versions.upload.button")}
                         </Button>
                     </Flex>

@@ -6,6 +6,7 @@ import { SortableContext, arrayMove, rectSortingStrategy, useSortable } from "@d
 import { CSS } from "@dnd-kit/utilities";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/api";
+import { useAuth } from "@/auth/AuthContext";
 import AppIcon from "@/components/AppIcon";
 import { useI18n } from "@/i18n";
 import { useApiError } from "@/lib/useApiError";
@@ -13,7 +14,7 @@ import { useApiError } from "@/lib/useApiError";
 const ACCEPT = "image/png,image/jpeg,image/webp";
 const MAX_SCREENSHOTS = 12;
 
-function Screenshot({ url, onDelete }) {
+function Screenshot({ url, onDelete, readOnly }) {
     const { t } = useI18n();
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: url });
     return (
@@ -22,7 +23,7 @@ function Screenshot({ url, onDelete }) {
             style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : 1, position: "relative", width: 150 }}
         >
             <img src={url} alt="" style={{ width: 150, height: 267, objectFit: "cover", borderRadius: 14, display: "block", background: "var(--ant-color-fill-tertiary)" }} />
-            <Flex justify="space-between" style={{ position: "absolute", top: 8, left: 8, right: 8 }}>
+            <Flex justify="space-between" style={{ position: "absolute", top: 8, left: 8, right: 8, display: readOnly ? "none" : "flex" }}>
                 <Button size="small" icon={<HolderOutlined />} {...attributes} {...listeners} style={{ cursor: "grab" }} aria-label={t("media.reorder")} />
                 <Popconfirm title={t("media.deleteScreenshot")} onConfirm={onDelete} okButtonProps={{ danger: true }}>
                     <Button size="small" danger icon={<DeleteOutlined />} aria-label={t("common.delete")} />
@@ -38,6 +39,7 @@ function Screenshot({ url, onDelete }) {
  */
 export default function AppMedia({ app }) {
     const listing = app.draft ?? app;
+    const { canWrite } = useAuth();
     const { t } = useI18n();
     const { message } = App.useApp();
     const onError = useApiError();
@@ -97,7 +99,7 @@ export default function AppMedia({ app }) {
 
     return (
         <Row gutter={16}>
-            {app.status === "published" && !app.draft && (
+            {canWrite && app.status === "published" && !app.draft && (
                 <Col xs={24}>
                     <Alert type="info" showIcon title={t("review.listing.liveNotice")} style={{ marginBottom: 16 }} />
                 </Col>
@@ -106,11 +108,13 @@ export default function AppMedia({ app }) {
                 <Card title={t("media.icon")}>
                     <Flex vertical align="center" gap={16}>
                         <AppIcon app={{ ...app, name: listing.name, icon_url: listing.icon_url }} size={128} />
+{canWrite && (
                         <Upload accept={ACCEPT} showUploadList={false} beforeUpload={(f) => (icon.mutate(f), false)}>
                             <Button icon={<UploadOutlined />} loading={icon.isPending}>
                                 {listing.icon_url ? t("media.replaceIcon") : t("media.uploadIcon")}
                             </Button>
                         </Upload>
+                        )}
                         <Typography.Text type="secondary" style={{ textAlign: "center", fontSize: 13 }}>
                             {t("media.iconHelp")}
                         </Typography.Text>
@@ -121,7 +125,7 @@ export default function AppMedia({ app }) {
                 <Card
                     title={t("media.screenshots", { count: shots.length, max: MAX_SCREENSHOTS })}
                     extra={
-                        <Upload accept={ACCEPT} multiple showUploadList={false} beforeUpload={queueShot} disabled={shots.length >= MAX_SCREENSHOTS}>
+                        canWrite && <Upload accept={ACCEPT} multiple showUploadList={false} beforeUpload={queueShot} disabled={shots.length >= MAX_SCREENSHOTS}>
                             <Button icon={<UploadOutlined />} loading={addShots.isPending} disabled={shots.length >= MAX_SCREENSHOTS}>
                                 {t("media.addScreenshots")}
                             </Button>
@@ -137,6 +141,7 @@ export default function AppMedia({ app }) {
                                         <Screenshot
                                             key={url}
                                             url={url}
+                                            readOnly={!canWrite}
                                             onDelete={() => {
                                                 const next = shots.filter((s) => s !== url);
                                                 setShots(next);

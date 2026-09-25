@@ -4,6 +4,7 @@ import { PlusOutlined, SearchOutlined } from "@ant-design/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { api } from "@/api";
+import { useAuth } from "@/auth/AuthContext";
 import AppIcon from "@/components/AppIcon";
 import PageHeader from "@/components/PageHeader";
 import { AppStatusTag, PlatformIcons } from "@/components/Tags";
@@ -52,6 +53,7 @@ export function CreateAppModal({ open, onClose }) {
 
 export default function AppsList() {
     const { t } = useI18n();
+    const { canWrite, isFullAdmin } = useAuth();
     const navigate = useNavigate();
     const [status, setStatus] = useState("all");
     const [q, setQ] = useState("");
@@ -80,6 +82,7 @@ export default function AppsList() {
                 </Flex>
             ),
         },
+        ...(isFullAdmin ? [{ title: t("apps.columns.account"), dataIndex: "account_name", render: (n) => n ?? "—" }] : []),
         { title: t("apps.columns.status"), dataIndex: "status", width: 130, render: (s) => <AppStatusTag status={s} /> },
         {
             title: t("apps.columns.platforms"),
@@ -111,9 +114,11 @@ export default function AppsList() {
                 title={t("apps.title")}
                 subtitle={t("apps.subtitle")}
                 extra={
-                    <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreating(true)}>
-                        {t("apps.new")}
-                    </Button>
+                    canWrite && (
+                        <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreating(true)}>
+                            {t("apps.new")}
+                        </Button>
+                    )
                 }
             />
             <Card styles={{ body: { padding: 0 } }}>
