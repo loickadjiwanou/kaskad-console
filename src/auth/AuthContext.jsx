@@ -24,10 +24,19 @@ export function AuthProvider({ children }) {
             isAuthenticated: !!session?.access_token,
             // Administrateur de la plateforme (unique) : valide et publie, gère les catégories et voit tous les comptes
             isFullAdmin: role === "admin",
+            // Double authentification obligatoire pas encore configurée : seule la configuration est affichée
+            mfaSetupRequired: !!session?.admin?.mfa_setup_required,
             // Propriétaire / développeur : gèrent les apps ; lecteur : consultation seule
             canWrite: ["admin", "owner", "developer"].includes(role),
             canManageTeam: ["admin", "owner"].includes(role),
-            login: async (email, password) => setSession(await api.login(email.trim().toLowerCase(), password)),
+            // Double authentification activée : renvoie { mfaToken } (le code est demandé ensuite)
+            login: async (email, password) => {
+                const res = await api.login(email.trim().toLowerCase(), password);
+                if (res.mfa_required) return { mfaToken: res.mfa_token };
+                setSession(res);
+                return {};
+            },
+            completeMfa: async (mfaToken, code) => setSession(await api.loginMfa(mfaToken, code.trim())),
             // Session ouverte après confirmation d'e-mail ou acceptation d'invitation
             startSession: (next) => setSession(next),
             logout: async () => {

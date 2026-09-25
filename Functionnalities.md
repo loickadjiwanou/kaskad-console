@@ -69,6 +69,11 @@ Pages outside a role's menu redirect to the dashboard when opened directly, and 
 
 ---
 
+### Two-step verification
+- Sign-in in two steps when it's on: 6-digit code (auto-submitted when complete) or a recovery code; also after a password reset.
+- **Required setup screen** (platform admin, or members of an account that requires it): full-page wizard, the console is locked until it's done; sign-out available.
+- Setup wizard: password → QR code (or key to type, copyable) and first code → 10 recovery codes (copy, download .txt, "I've saved them" checkbox).
+
 ## 3. Layout and preferences
 
 - Collapsible side menu (automatic on small screens), header with theme switch, language switch (FR / EN) and account menu (My account, Sign out).
@@ -85,7 +90,7 @@ Pages outside a role's menu redirect to the dashboard when opened directly, and 
 ## 4. Dashboard
 
 - Greeting with the member's first name; subtitle adapted to the scope (the account, or the whole platform for the admin).
-- Key figures: published apps (+ drafts / unpublished), total downloads, downloads over the last 30 days, and:
+- Key figures: published apps (+ drafts / unpublished), total downloads, downloads over the last 30 days (with page views and conversion rate), and:
   - platform admin: **requests to review** (opens Moderation);
   - members: **pending versions** (opens Apps).
 - Downloads chart with period selector (7 days, 30 days, 90 days, 12 months).
@@ -217,10 +222,14 @@ Nothing goes live without the platform admin:
 
 - Period: 7 days, 30 days, 90 days, 12 months or custom date range; interval daily / weekly / monthly.
 - Filters: developer account (platform admin), app, version.
-- Downloads over time (chart + total for the period).
+- **Funnel cards:** page views (Kaskad app + public web page), unique visitors, downloads, conversion rate (downloads ÷ views).
+- **Page views and downloads over time** (two series on the same chart).
+- **By country** (downloads or views): flag, localized country name, count and share; "Unknown" when the server has no geolocation.
+- **Where page views come from:** Kaskad app or public web page.
+- **Versions actually installed:** active devices per app (click to open the app), or for one app per version and platform with share and the "Latest" tag, plus the share of devices on the latest version.
 - Breakdown by platform and by file format.
-- Most downloaded apps, or — for one app — downloads per version with share (click to filter).
-- CSV export (one line per download, with account, app, version, platform, format).
+- Most downloaded apps with views and conversion, or — for one app — downloads per version with share (click to filter).
+- CSV export (one line per download, with account, app, version, platform, format, country).
 - Scope: members see only their account's apps; the platform admin sees the whole platform.
 
 ---
@@ -240,6 +249,7 @@ Nothing goes live without the platform admin:
 - Members: name, email, role, access switch (deactivate / reactivate, signs the member out), last sign-in, member since. Change role between Developer and Viewer.
 - **Invite a member:** email + role (Developer / Viewer, with explanation). The invitation email is sent in the console's current language; pending invitations can be resent (new link) or revoked; expired invitations are marked.
 - Rename the developer account.
+- **Security:** switch "Require two-step verification for all members" (the owner must have it on first), with the number of active members who haven't set it up; **two-step verification column** per member (on / off) and **Reset** for a member who lost their phone (signs them out, emails them).
 - **API keys** (continuous integration): create (name) → the key is shown **once** with a copy button and a ready-to-use GitHub Actions example; list (name, key prefix, creator, creation date, last use); revoke. A key acts as a developer: it uploads versions and submits them for review (`submit=true` submits automatically after the scan), but never publishes, manages the team or creates keys.
 
 ---
@@ -257,6 +267,7 @@ Nothing goes live without the platform admin:
 
 - Profile: email, role, member since; edit the name.
 - Change password (current password required).
+- **Two-step verification card:** status (on since, recovery codes left), turn on (wizard), turn off (password + code, hidden when it's required), new recovery codes (code from the app).
 - Preferences: theme (4 options), Material Design switch, language.
 
 ---

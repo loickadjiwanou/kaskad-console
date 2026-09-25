@@ -14,7 +14,8 @@ Anyone can **create a developer account** (sign up, then confirm the email addre
 - **Public page:** shareable link of each published app's web page, which opens the app in Kaskad when it is installed
 - **Moderation** (platform admin): review requests from developers (approve / reject with a reason), queue of versions being scanned, ready or rejected, **app reports** from users (dismiss, handle, unpublish) and **reported user reviews**
 - **Categories:** create, edit (name + icon), reorder by drag and drop, delete (apps are moved to another category), move apps between categories
-- **Statistics:** downloads by period (preset or custom range, daily / weekly / monthly), per app and per version, breakdown by platform and format, CSV export
+- **Statistics:** downloads and app page views by period (preset or custom range, daily / weekly / monthly), unique visitors and conversion rate, countries, traffic sources (Kaskad app / public web page), versions actually installed on active devices, per app and per version, breakdown by platform and format, CSV export
+- **Two-step verification:** authenticator app codes (QR code setup) and recovery codes; required for the platform admin, optionally required by an account owner for all members; reset for a lost phone
 - **Activity log** (account owner and platform admin): who did what and when in the account — members' actions, review decisions and scan results — filtered by type or member (and by account for the platform admin)
 - **Team** (account owner): invite members by email, change roles (developer / viewer), deactivate access, rename the account
 - **Developer accounts** (platform admin): every registered account with its owner, members and apps; suspend an account (with a reason emailed to the owner) or reactivate it
@@ -61,6 +62,10 @@ yarn lint       # ESLint
 ```
 
 ## Deployment
+
+A `Dockerfile` builds the console and serves it with nginx (SPA fallback, cached assets): `docker build --build-arg VITE_API_URL=https://api.example.com .` The full production stack (API, console, MongoDB, MinIO, ClamAV, HTTPS) is in `kaskad-backend/deploy/`.
+
+Continuous integration (GitHub Actions): lint, translation check (`yarn check:i18n`), build and Docker image.
 
 `yarn build` produces a static site in `dist/`. Host it on any static host (Nginx, S3 + CloudFront, Netlify…), with two requirements:
 

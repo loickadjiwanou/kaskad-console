@@ -31,3 +31,19 @@ export const EXTENSION = { apk: ".apk", exe: ".exe", msi: ".msi", dmg: ".dmg", p
 
 // Même règle que le backend (numéro de version sémantique)
 export const SEMVER = /^\d+\.\d+(\.\d+){0,2}([-+][0-9A-Za-z.-]+)?$/;
+
+/** Nom du pays (code ISO à 2 lettres) dans la langue de la console ; null → « Inconnu » à afficher par l'appelant. */
+export function countryName(code, lang = getLanguage()) {
+    if (!code) return null;
+    try {
+        return new Intl.DisplayNames([lang], { type: "region" }).of(code) ?? code;
+    } catch {
+        return code;
+    }
+}
+
+/** Drapeau emoji d'un code pays ISO. */
+export const countryFlag = (code) => (code && code.length === 2 ? String.fromCodePoint(...[...code.toUpperCase()].map((c) => 0x1f1a5 + c.charCodeAt(0))) : "🏳️");
+
+export const formatPercent = (ratio, digits = 1) =>
+    ratio == null ? "—" : new Intl.NumberFormat(getLanguage(), { style: "percent", maximumFractionDigits: digits }).format(ratio);

@@ -74,6 +74,10 @@ function headers(extra = {}) {
 
 async function toError(res) {
     const data = await res.json().catch(() => null);
+    // Double authentification devenue obligatoire (exigée par le propriétaire) : la console affiche la configuration
+    if (data?.code === "mfa_setup_required" && session?.admin && !session.admin.mfa_setup_required) {
+        setSession({ ...session, admin: { ...session.admin, mfa_setup_required: true, mfa_required: true } });
+    }
     return new ApiError(res.status, data?.detail || `HTTP ${res.status}`, data?.code, data);
 }
 

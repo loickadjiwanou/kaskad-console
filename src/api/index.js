@@ -3,7 +3,18 @@ import { downloadFile, request, upload } from "./client";
 
 export const api = {
     // Authentification
+    // Réponse : session, ou { mfa_required, mfa_token } quand la double authentification est activée
     login: (email, password) => request("/admin/auth/login", { method: "POST", body: { email, password } }),
+    loginMfa: (mfa_token, code) => request("/admin/auth/login/2fa", { method: "POST", body: { mfa_token, code } }),
+
+    // Double authentification (TOTP + codes de secours)
+    mfaStatus: () => request("/admin/auth/2fa"),
+    mfaSetup: (password) => request("/admin/auth/2fa/setup", { method: "POST", body: { password } }),
+    mfaEnable: (code) => request("/admin/auth/2fa/enable", { method: "POST", body: { code } }),
+    mfaDisable: (password, code) => request("/admin/auth/2fa/disable", { method: "POST", body: { password, code } }),
+    mfaRecoveryCodes: (code) => request("/admin/auth/2fa/recovery-codes", { method: "POST", body: { code } }),
+    resetMemberMfa: (id) => request(`/admin/members/${id}/reset-2fa`, { method: "POST" }),
+    setRequire2fa: (require_2fa) => request("/admin/account", { method: "PATCH", body: { require_2fa } }),
     logout: (refresh_token) => request("/admin/auth/logout", { method: "POST", body: { refresh_token } }),
     me: () => request("/admin/auth/me"),
     updateMe: (body) => request("/admin/auth/me", { method: "PATCH", body }),
@@ -95,6 +106,9 @@ export const api = {
     overview: () => request("/admin/stats/overview"),
     downloads: (params) => request("/admin/stats/downloads", { params }),
     breakdown: (params) => request("/admin/stats/breakdown", { params }),
+    // Vues de fiche, visiteurs, téléchargements, conversion ; versions réellement installées
+    funnel: (params) => request("/admin/stats/funnel", { params }),
+    installed: (params) => request("/admin/stats/installed", { params }),
     topApps: (params) => request("/admin/stats/top-apps", { params }),
     exportCsv: (params) => downloadFile("/admin/stats/export.csv", params, "kaskad-downloads.csv"),
     moderationQueue: () => request("/admin/moderation/queue"),

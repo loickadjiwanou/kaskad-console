@@ -11,7 +11,7 @@ import StatCard from "@/components/StatCard";
 import { PlatformTag } from "@/components/Tags";
 import { useAuth } from "@/auth/AuthContext";
 import { useI18n } from "@/i18n";
-import { formatDateTime, formatNumber } from "@/lib/format";
+import { formatDateTime, formatNumber, formatPercent } from "@/lib/format";
 import { periodRange } from "@/lib/periods";
 import { palette } from "@/theme";
 
@@ -51,7 +51,20 @@ export default function Dashboard() {
                         <StatCard label={t("dashboard.totalDownloads")} value={formatNumber(overview?.total_downloads)} icon={<CloudDownloadOutlined />} color={palette.accent.dark} />
                     </Col>
                     <Col xs={24} sm={12} xl={6}>
-                        <StatCard label={t("dashboard.last30")} value={formatNumber(overview?.downloads_last_30_days)} icon={<RiseOutlined />} color={palette.semantic.success} />
+                        <StatCard
+                            label={t("dashboard.last30")}
+                            value={formatNumber(overview?.downloads_last_30_days)}
+                            icon={<RiseOutlined />}
+                            color={palette.semantic.success}
+                            footer={
+                                <Typography.Text type="secondary">
+                                    {t("dashboard.viewsConversion", {
+                                        views: formatNumber(overview?.views_last_30_days),
+                                        conversion: formatPercent(overview?.conversion_last_30_days),
+                                    })}
+                                </Typography.Text>
+                            }
+                        />
                     </Col>
                     <Col xs={24} sm={12} xl={6}>
                         <StatCard

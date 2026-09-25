@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { App, Avatar, Button, Card, Flex, Form, Input, Modal, Popconfirm, Radio, Select, Switch, Table, Tag, Typography } from "antd";
+import { Alert, App, Avatar, Button, Card, Flex, Form, Input, Modal, Popconfirm, Radio, Select, Switch, Table, Tag, Tooltip, Typography } from "antd";
 import { DeleteOutlined, EditOutlined, MailOutlined, SendOutlined, UserAddOutlined } from "@ant-design/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/api";
@@ -108,7 +108,7 @@ function RenameModal({ open, account, onClose }) {
 /** Équipe du compte développeur : membres (rôles, accès) et invitations en attente. Réservé au propriétaire. */
 export default function Team() {
     const { t } = useI18n();
-    const { admin: me, account } = useAuth();
+    const { admin: me, account, isFullAdmin, setAdmin } = useAuth();
     const { message, modal } = App.useApp();
     const onError = useApiError();
     const queryClient = useQueryClient();
@@ -143,6 +143,26 @@ export default function Team() {
         },
         onError,
     });
+
+    // Double authentification : réinitialisation (appareil perdu) et obligation pour tout le compte
+    const resetMfa = useMutation({
+        mutationFn: api.resetMemberMfa,
+        onSuccess: (m) => {
+            queryClient.invalidateQueries({ queryKey: ["members"] });
+            message.success(t("mfa.resetDone", { name: m.name }));
+        },
+        onError,
+    });
+    const require2fa = useMutation({
+        mutationFn: api.setRequire2fa,
+        onSuccess: (acc) => {
+            setAdmin({ ...me, account: acc });
+            message.success(acc.require_2fa ? t("mfa.requireOn") : t("mfa.requireOff"));
+        },
+        onError,
+    });
+    const canResetMfa = (m) => m.mfa_enabled && m.id !== me?.id && m.role !== "admin" && (m.role !== "owner" || isFullAdmin);
+    const withoutMfa = members.filter((m) => m.active && !m.mfa_enabled).length;
 
     const editable = (m) => INVITABLE.includes(m.role) && m.id !== me?.id;
     const setActive = (m, active) =>
@@ -196,6 +216,28 @@ export default function Team() {
             render: (_, m) =>
                 editable(m) ? <Switch checked={m.active} onChange={(v) => setActive(m, v)} /> : <Typography.Text type="secondary">—</Typography.Text>,
         },
+        {
+            title: t("mfa.column"),
+            key: "mfa",
+            render: (_, m) => (
+                <Flex gap={6} align="center">
+                    {m.mfa_enabled ? <Tag color="green">{t("mfa.on")}</Tag> : <Tag>{t("mfa.off")}</Tag>}
+                    {canResetMfa(m) && (
+                        <Popconfirm
+                            title={t("mfa.resetTitle", { name: m.name })}
+                            description={<div style={{ maxWidth: 300 }}>{t("mfa.resetText")}</div>}
+                            okText={t("mfa.reset")}
+                            okButtonProps={{ danger: true }}
+                            onConfirm={() => resetMfa.mutate(m.id)}
+                        >
+                            <Button size="small" type="link" danger>
+                                {t("mfa.reset")}
+                            </Button>
+                        </Popconfirm>
+                    )}
+                </Flex>
+            ),
+        },
         { title: t("team.columns.lastLogin"), dataIndex: "last_login_at", render: formatDateTime, responsive: ["lg"] },
         { title: t("team.columns.since"), dataIndex: "created_at", render: formatDate, responsive: ["md"] },
     ];
@@ -241,6 +283,28 @@ export default function Team() {
                     </>
                 }
             />
+            <Card title={t("mfa.teamTitle")} style={{ marginBottom: 16 }}>
+                <Flex justify="space-between" align="flex-start" gap={16}>
+                    <div>
+                        <Typography.Text strong>{t("mfa.requireLabel")}</Typography.Text>
+                        <Typography.Paragraph type="secondary" style={{ margin: "4px 0 0" }}>
+                            {t("mfa.requireHelp")}
+                        </Typography.Paragraph>
+                    </div>
+                    <Tooltip title={!me?.mfa_enabled && !account?.require_2fa ? t("mfa.requireFirst") : undefined}>
+                        <Switch
+                            checked={!!account?.require_2fa}
+                            loading={require2fa.isPending}
+                            disabled={!me?.mfa_enabled && !account?.require_2fa}
+                            onChange={(v) => require2fa.mutate(v)}
+                            aria-label={t("mfa.requireLabel")}
+                        />
+                    </Tooltip>
+                </Flex>
+                {account?.require_2fa && withoutMfa > 0 && (
+                    <Alert type="info" showIcon style={{ marginTop: 12 }} title={t("mfa.pendingMembers", { count: withoutMfa })} />
+                )}
+            </Card>
             <Card title={t("team.members", { count: members.length })} styles={{ body: { padding: 0 } }} style={{ marginBottom: 16 }}>
                 <Table rowKey="id" loading={isLoading} dataSource={members} columns={memberColumns} pagination={false} scroll={{ x: "max-content" }} />
             </Card>

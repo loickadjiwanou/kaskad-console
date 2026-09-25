@@ -21,6 +21,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { api } from "@/api";
 import { useAuth } from "@/auth/AuthContext";
+import MfaRequired from "@/components/security/MfaRequired";
 import { useI18n } from "@/i18n";
 import { useThemeMode } from "@/theme";
 
@@ -29,7 +30,7 @@ const { Sider, Header, Content } = Layout;
 export default function AppLayout() {
     const { t, lang, setLang } = useI18n();
     const { mode, setMode } = useThemeMode();
-    const { admin, account, isFullAdmin, canManageTeam, logout } = useAuth();
+    const { admin, account, isFullAdmin, canManageTeam, logout, mfaSetupRequired } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const screens = Grid.useBreakpoint();
@@ -37,7 +38,7 @@ export default function AppLayout() {
     const mobile = !screens.lg;
 
     // Nombre de versions en attente (badge du menu Modération)
-    const { data: overview } = useQuery({ queryKey: ["overview"], queryFn: api.overview, refetchInterval: 30_000 });
+    const { data: overview } = useQuery({ queryKey: ["overview"], queryFn: api.overview, refetchInterval: 30_000, enabled: !mfaSetupRequired });
     // Demandes à valider (badge du menu Modération, administrateur de la plateforme)
     // + signalements d'apps ouverts et avis signalés
     const pending = (overview?.reviews_pending ?? 0) + (overview?.reports_open ?? 0) + (overview?.user_reviews_reported ?? 0);
@@ -100,6 +101,9 @@ export default function AppLayout() {
             if (key === "logout") await signOut();
         },
     };
+
+    // Double authentification obligatoire à configurer avant d'accéder à la console
+    if (mfaSetupRequired) return <MfaRequired />;
 
     return (
         <Layout style={{ minHeight: "100vh" }}>

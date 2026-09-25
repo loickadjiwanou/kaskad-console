@@ -5,17 +5,20 @@ import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { api } from "@/api";
 import { useAuth } from "@/auth/AuthContext";
 import AuthShell from "@/components/AuthShell";
+import MfaCodeForm from "@/components/security/MfaCodeForm";
 import { useI18n } from "@/i18n";
 
 export default function Login() {
     const { t } = useI18n();
     const { message } = App.useApp();
-    const { login, isAuthenticated } = useAuth();
+    const { login, completeMfa, isAuthenticated } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(false);
     const [form] = Form.useForm();
+    // Double authentification : jeton reçu après le mot de passe (ou après la réinitialisation du mot de passe)
+    const [mfaToken, setMfaToken] = useState(location.state?.mfaToken ?? null);
 
     if (isAuthenticated) return <Navigate to="/" replace />;
 
@@ -23,7 +26,8 @@ export default function Login() {
         setError(null);
         setLoading(true);
         try {
-            await login(email, password);
+            const res = await login(email, password);
+            if (res.mfaToken) return setMfaToken(res.mfaToken);
             navigate(location.state?.from || "/", { replace: true });
         } catch (e) {
             setError(e);
@@ -31,6 +35,37 @@ export default function Login() {
             setLoading(false);
         }
     };
+
+    const verify = async (code) => {
+        setError(null);
+        setLoading(true);
+        try {
+            await completeMfa(mfaToken, code);
+            navigate(location.state?.from || "/", { replace: true });
+        } catch (e) {
+            setError(e);
+            // Jeton expiré : retour au mot de passe
+            if (e.code === "mfa_token_invalid") setMfaToken(null);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (mfaToken) {
+        return (
+            <AuthShell title={t("mfa.loginTitle")} subtitle={t("mfa.loginSubtitle")}>
+                <MfaCodeForm
+                    onSubmit={verify}
+                    loading={loading}
+                    error={error}
+                    onBack={() => {
+                        setMfaToken(null);
+                        setError(null);
+                    }}
+                />
+            </AuthShell>
+        );
+    }
 
     const resend = async () => {
         await api.resendVerification(form.getFieldValue("email")).catch(() => {});

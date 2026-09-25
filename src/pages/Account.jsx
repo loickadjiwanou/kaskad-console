@@ -5,6 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { api } from "@/api";
 import { useAuth } from "@/auth/AuthContext";
 import PageHeader from "@/components/PageHeader";
+import TwoStepCard from "@/components/security/TwoStepCard";
 import { useI18n } from "@/i18n";
 import { formatDate } from "@/lib/format";
 import { useApiError } from "@/lib/useApiError";
@@ -125,6 +126,9 @@ export default function Account() {
                             </Button>
                         </Form>
                     </Card>
+                    <div style={{ marginTop: 16 }}>
+                        <TwoStepCard />
+                    </div>
                 </Col>
             </Row>
         </>

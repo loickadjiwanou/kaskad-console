@@ -22,8 +22,10 @@ export default function ResetPassword() {
         setLoading(true);
         try {
             const session = await api.resetPassword(params.get("token") || "", password);
-            startSession(session);
             message.success(t("reset.done"));
+            // Double authentification activée : le code est demandé sur la page de connexion
+            if (session.mfa_required) return navigate("/login", { replace: true, state: { mfaToken: session.mfa_token } });
+            startSession(session);
             navigate("/", { replace: true });
         } catch (e) {
             setError(e);

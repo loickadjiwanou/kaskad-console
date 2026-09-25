@@ -1,16 +1,18 @@
 import { useMemo, useState } from "react";
-import { App, Button, Card, Col, DatePicker, Flex, Row, Segmented, Select, Table, Typography } from "antd";
-import { DownloadOutlined } from "@ant-design/icons";
+import { App, Button, Card, Col, DatePicker, Flex, Progress, Row, Segmented, Select, Table, Tag, Typography } from "antd";
+import { CloudDownloadOutlined, DownloadOutlined, EyeOutlined, FunnelPlotOutlined, TeamOutlined } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { api } from "@/api";
 import { useAuth } from "@/auth/AuthContext";
 import AppIcon from "./AppIcon";
 import BreakdownChart from "./BreakdownChart";
-import DownloadsChart from "./DownloadsChart";
+import StatCard from "./StatCard";
+import TrafficChart from "./TrafficChart";
 import { PlatformTag } from "./Tags";
 import { useI18n } from "@/i18n";
-import { formatLabel, formatNumber, platformOf } from "@/lib/format";
+import { countryFlag, countryName, formatLabel, formatNumber, formatPercent, platformOf } from "@/lib/format";
+import { palette } from "@/theme";
 import { PERIODS, periodRange } from "@/lib/periods";
 import { useApiError } from "@/lib/useApiError";
 
@@ -73,6 +75,26 @@ export default function StatsPanel({ appId: fixedAppId }) {
         enabled: !!appId,
     }).data;
     const { data: top = [] } = useQuery({ queryKey: ["top-apps", base], queryFn: () => api.topApps({ ...base, limit: 10 }), enabled: !appId });
+    // Vues de fiche, conversion, pays, sources et versions installées
+    const [countryMetric, setCountryMetric] = useState("downloads");
+    const { data: viewSeries = [] } = useQuery({
+        queryKey: ["views", base, effectiveInterval, appId],
+        queryFn: () => api.downloads({ ...base, interval: effectiveInterval, app_id: appId, metric: "views" }),
+    });
+    const { data: funnel } = useQuery({ queryKey: ["funnel", base, appId], queryFn: () => api.funnel({ ...base, app_id: appId }) });
+    const { data: byCountry = [] } = useQuery({
+        queryKey: ["breakdown", "country", countryMetric, base, appId],
+        queryFn: () => api.breakdown({ ...base, by: "country", metric: countryMetric, app_id: appId }),
+    });
+    const { data: bySource = [] } = useQuery({
+        queryKey: ["breakdown", "source", base, appId],
+        queryFn: () => api.breakdown({ ...base, by: "source", metric: "views", app_id: appId }),
+    });
+    const { data: installed } = useQuery({
+        queryKey: ["installed", base.account_id, appId],
+        queryFn: () => api.installed({ account_id: base.account_id, app_id: appId }),
+    });
+    const countryTotal = byCountry.reduce((n, r) => n + r.count, 0);
 
     const total = series.reduce((n, d) => n + d.count, 0);
 
@@ -169,15 +191,145 @@ export default function StatsPanel({ appId: fixedAppId }) {
                 </Flex>
             </Card>
 
+            <Row gutter={[16, 16]}>
+                <Col xs={24} sm={12} xl={6}>
+                    <StatCard label={t("stats.views")} value={formatNumber(funnel?.views)} icon={<EyeOutlined />} color={palette.accent.DEFAULT} footer={<Typography.Text type="secondary">{t("stats.viewsHelp")}</Typography.Text>} />
+                </Col>
+                <Col xs={24} sm={12} xl={6}>
+                    <StatCard label={t("stats.visitors")} value={formatNumber(funnel?.visitors)} icon={<TeamOutlined />} color={palette.tertiary.DEFAULT} footer={<Typography.Text type="secondary">{t("stats.visitorsHelp")}</Typography.Text>} />
+                </Col>
+                <Col xs={24} sm={12} xl={6}>
+                    <StatCard label={t("stats.downloads")} value={formatNumber(funnel?.downloads)} icon={<CloudDownloadOutlined />} color={palette.primary.DEFAULT} footer={<Typography.Text type="secondary">{t("stats.totalPeriod", { count: total, formatted: formatNumber(total) })}</Typography.Text>} />
+                </Col>
+                <Col xs={24} sm={12} xl={6}>
+                    <StatCard label={t("stats.conversion")} value={formatPercent(funnel?.conversion)} icon={<FunnelPlotOutlined />} color={palette.semantic.success} footer={<Typography.Text type="secondary">{t("stats.conversionHelp")}</Typography.Text>} />
+                </Col>
+            </Row>
+
+            <Card title={t("stats.trafficOverTime")}>
+                <TrafficChart views={viewSeries} downloads={series} interval={effectiveInterval} height={320} />
+            </Card>
+
+            <Row gutter={[16, 16]}>
+                <Col xs={24} lg={14}>
+                    <Card
+                        title={t("stats.byCountry")}
+                        style={{ height: "100%" }}
+                        extra={
+                            <Segmented
+                                size="small"
+                                value={countryMetric}
+                                onChange={setCountryMetric}
+                                options={[
+                                    { value: "downloads", label: t("stats.downloads") },
+                                    { value: "views", label: t("stats.views") },
+                                ]}
+                            />
+                        }
+                        styles={{ body: { padding: 0 } }}
+                    >
+                        <Table
+                            rowKey={(r) => r.key ?? "unknown"}
+                            size="middle"
+                            pagination={byCountry.length > 10 ? { pageSize: 10, size: "small" } : false}
+                            dataSource={byCountry}
+                            locale={{ emptyText: t("stats.noData") }}
+                            columns={[
+                                {
+                                    title: t("stats.country"),
+                                    dataIndex: "key",
+                                    render: (code) => (
+                                        <Flex gap={8} align="center">
+                                            <span style={{ fontSize: 18 }}>{countryFlag(code)}</span>
+                                            {code ? countryName(code) : <Typography.Text type="secondary">{t("stats.unknownCountry")}</Typography.Text>}
+                                        </Flex>
+                                    ),
+                                },
+                                { title: t(`stats.${countryMetric}`), dataIndex: "count", align: "right", width: 140, render: formatNumber },
+                                {
+                                    title: t("stats.share"),
+                                    dataIndex: "count",
+                                    width: 200,
+                                    render: (n) => <Progress percent={countryTotal ? Math.round((n / countryTotal) * 100) : 0} size="small" />,
+                                },
+                            ]}
+                        />
+                        <Typography.Paragraph type="secondary" style={{ margin: 0, padding: "12px 16px", fontSize: 12 }}>
+                            {t("stats.countryHelp")}
+                        </Typography.Paragraph>
+                    </Card>
+                </Col>
+                <Col xs={24} lg={10}>
+                    <Card title={t("stats.viewSources")} style={{ height: "100%" }}>
+                        <BreakdownChart rows={bySource.map((r) => ({ label: t(`stats.sources.${r.key ?? "app"}`), count: r.count }))} />
+                        <Typography.Paragraph type="secondary" style={{ margin: "12px 0 0", fontSize: 12 }}>
+                            {t("stats.viewSourcesHelp")}
+                        </Typography.Paragraph>
+                    </Card>
+                </Col>
+            </Row>
+
             <Card
-                title={t("stats.downloadsOverTime")}
+                title={t("stats.installed")}
                 extra={
-                    <Typography.Text type="secondary">
-                        {t("stats.totalPeriod", { count: total, formatted: formatNumber(total) })}
-                    </Typography.Text>
+                    installed && (
+                        <Typography.Text type="secondary">
+                            {appId && installed.total
+                                ? t("stats.installedSummary", { count: installed.total, formatted: formatNumber(installed.total), percent: formatPercent(installed.on_latest / installed.total, 0) })
+                                : t("stats.installedTotal", { count: installed.total, formatted: formatNumber(installed.total) })}
+                        </Typography.Text>
+                    )
                 }
+                styles={{ body: { padding: 0 } }}
             >
-                <DownloadsChart data={series} interval={effectiveInterval} height={320} />
+                <Table
+                    rowKey={(r) => (appId ? `${r.version_code}-${r.platform}` : r.app_id)}
+                    size="middle"
+                    pagination={false}
+                    dataSource={installed?.items ?? []}
+                    locale={{ emptyText: t("stats.installedEmpty") }}
+                    rowClassName={appId ? undefined : "kaskad-clickable-row"}
+                    onRow={(r) => (appId ? {} : { onClick: () => setAppId(r.app_id) })}
+                    columns={
+                        appId
+                            ? [
+                                  {
+                                      title: t("versions.columns.version"),
+                                      key: "version",
+                                      render: (_, r) => (
+                                          <Flex gap={8} align="center">
+                                              v{r.version_name}
+                                              {r.latest && <Tag color="green">{t("stats.latestVersion")}</Tag>}
+                                          </Flex>
+                                      ),
+                                  },
+                                  { title: t("versions.columns.platform"), dataIndex: "platform", render: (p) => (p ? <PlatformTag platform={p} /> : "—") },
+                                  { title: t("stats.devices"), dataIndex: "count", align: "right", render: formatNumber },
+                                  {
+                                      title: t("stats.share"),
+                                      dataIndex: "count",
+                                      width: 200,
+                                      render: (n) => <Progress percent={installed?.total ? Math.round((n / installed.total) * 100) : 0} size="small" />,
+                                  },
+                              ]
+                            : [
+                                  {
+                                      title: t("apps.columns.app"),
+                                      dataIndex: "name",
+                                      render: (name, r) => (
+                                          <Flex align="center" gap={10}>
+                                              <AppIcon app={{ id: r.app_id, name, icon_url: apps?.items?.find((a) => a.id === r.app_id)?.icon_url }} size={28} />
+                                              {name ?? "—"}
+                                          </Flex>
+                                      ),
+                                  },
+                                  { title: t("stats.devices"), dataIndex: "count", align: "right", render: formatNumber },
+                              ]
+                    }
+                />
+                <Typography.Paragraph type="secondary" style={{ margin: 0, padding: "12px 16px", fontSize: 12 }}>
+                    {t("stats.installedHelp")}
+                </Typography.Paragraph>
             </Card>
 
             <Row gutter={[16, 16]}>
@@ -253,7 +405,9 @@ export default function StatsPanel({ appId: fixedAppId }) {
                                             </Flex>
                                         ),
                                     },
+                                    { title: t("stats.views"), dataIndex: "views", align: "right", render: formatNumber },
                                     { title: t("stats.downloads"), dataIndex: "downloads", align: "right", render: formatNumber },
+                                    { title: t("stats.conversion"), dataIndex: "conversion", align: "right", render: (c) => formatPercent(c) },
                                 ]}
                             />
                         </Card>
