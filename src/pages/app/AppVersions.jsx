@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Alert, Button, Card, Dropdown, Flex, Switch, Table, Typography } from "antd";
-import { CloudUploadOutlined, MoreOutlined } from "@ant-design/icons";
-import { useQuery } from "@tanstack/react-query";
+import { Alert, App, Button, Card, Dropdown, Flex, Select, Switch, Table, Typography } from "antd";
+import { CloudUploadOutlined, ExperimentOutlined, MoreOutlined } from "@ant-design/icons";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/api";
-import { PlatformTag, ScanTag, VersionStatusTag } from "@/components/Tags";
+import { ChannelTag, PlatformTag, ScanTag, VersionStatusTag } from "@/components/Tags";
 import UploadVersionDrawer from "@/components/versions/UploadVersionDrawer";
 import VersionDrawer from "@/components/versions/VersionDrawer";
 import { ReviewTag } from "@/components/review/ReviewBanner";
@@ -12,6 +12,81 @@ import { canPublish, isPending, isScanning, useVersionActions } from "@/componen
 import { useAuth } from "@/auth/AuthContext";
 import { useI18n } from "@/i18n";
 import { formatBytes, formatDateTime, formatNumber } from "@/lib/format";
+import { useApiError } from "@/lib/useApiError";
+
+/** Testeurs du canal bêta : adresses e-mail des comptes de l'app client autorisés à voir les versions bêta. */
+function TestersCard({ app }) {
+    const { t } = useI18n();
+    const { message } = App.useApp();
+    const onError = useApiError();
+    const queryClient = useQueryClient();
+    const { canWrite } = useAuth();
+    const [emails, setEmails] = useState(app.testers ?? []);
+    const dirty = JSON.stringify([...emails].sort()) !== JSON.stringify([...(app.testers ?? [])].sort());
+    const save = useMutation({
+        mutationFn: () => api.setTesters(app.id, emails),
+        onSuccess: (next) => {
+            const added = next.testers.filter((e) => !(app.testers ?? []).includes(e)).length;
+            queryClient.setQueryData(["app", app.id], next);
+            message.success(
+                added
+                    ? `${t("release.testersSaved", { count: next.testers.length })} · ${t("release.invitesSent", { count: added })}`
+                    : t("release.testersSaved", { count: next.testers.length }),
+            );
+        },
+        onError,
+    });
+    const minTesters = app.min_beta_testers ?? 3;
+    const invalid = emails.filter((e) => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e));
+    return (
+        <Card
+            size="small"
+            style={{ marginBottom: 16 }}
+            title={
+                <Flex align="center" gap={8}>
+                    <ExperimentOutlined />
+                    {t("release.testers", { count: (app.testers ?? []).length })}
+                </Flex>
+            }
+            extra={
+                canWrite && (
+                    <Button size="small" type="primary" disabled={!dirty || invalid.length > 0} loading={save.isPending} onClick={() => save.mutate()}>
+                        {t("common.save")}
+                    </Button>
+                )
+            }
+        >
+            <Typography.Paragraph type="secondary" style={{ marginBottom: 8, fontSize: 13 }}>
+                {t("release.testersHelp")}
+            </Typography.Paragraph>
+            {(app.testers ?? []).length < minTesters && (
+                <Alert
+                    type="warning"
+                    showIcon
+                    style={{ marginBottom: 12 }}
+                    title={t("release.minTesters", { min: minTesters, count: (app.testers ?? []).length })}
+                />
+            )}
+            <Select
+                mode="tags"
+                style={{ width: "100%" }}
+                value={emails}
+                onChange={(list) => setEmails([...new Set(list.map((e) => e.trim().toLowerCase()).filter(Boolean))])}
+                tokenSeparators={[",", ";", " "]}
+                placeholder={t("release.testersPlaceholder")}
+                open={false}
+                suffixIcon={null}
+                disabled={!canWrite}
+                status={invalid.length ? "error" : undefined}
+            />
+            {invalid.length > 0 && (
+                <Typography.Text type="danger" style={{ fontSize: 12 }}>
+                    {t("release.invalidEmails", { emails: invalid.join(", ") })}
+                </Typography.Text>
+            )}
+        </Card>
+    );
+}
 
 /** Versions d'une app : upload, suivi de l'analyse de sécurité, publication manuelle après validation. */
 export default function AppVersions({ app }) {
@@ -33,7 +108,8 @@ export default function AppVersions({ app }) {
     // Admin complet : versions à publier (dont soumises) ; éditeur : versions validées par l'analyse à soumettre
     const ready = versions.filter((v) => canPublish(v) && !v.review);
     const submitted = versions.filter(isPending);
-    const ctx = { appName: app.name, appStatus: app.status };
+    // Bêta : le nombre de testeurs conditionne la soumission et la publication
+    const ctx = { appName: app.name, appStatus: app.status, testers: (app.testers ?? []).length, minTesters: app.min_beta_testers ?? 3 };
 
     const columns = [
         {
@@ -56,8 +132,9 @@ export default function AppVersions({ app }) {
             key: "status",
             render: (_, v) => (
                 <Flex gap={4} wrap>
-                    <VersionStatusTag status={v.status} />
-                    {v.status === "draft" && <ReviewTag review={v.review} />}
+                    <VersionStatusTag status={v.status} scheduledAt={v.scheduled_at} />
+                    <ChannelTag channel={v.channel} />
+                    {(v.status === "draft" || isPending(v) || v.review?.state === "rejected") && <ReviewTag review={v.review} />}
                 </Flex>
             ),
         },
@@ -96,6 +173,7 @@ export default function AppVersions({ app }) {
 
     return (
         <>
+            <TestersCard app={app} key={(app.testers ?? []).join(",")} />
             {canWrite && ready.length > 0 && (
                 <Alert
                     type="success"
@@ -144,7 +222,14 @@ export default function AppVersions({ app }) {
                     setSelected(v.id);
                 }}
             />
-            <VersionDrawer versionId={selected} appName={app.name} appStatus={app.status} onClose={() => setSelected(null)} />
+            <VersionDrawer
+                versionId={selected}
+                appName={app.name}
+                appStatus={app.status}
+                testers={ctx.testers}
+                minTesters={ctx.minTesters}
+                onClose={() => setSelected(null)}
+            />
         </>
     );
 }

@@ -58,7 +58,16 @@ export default function Login() {
                 <Form.Item name="email" label={t("login.email")} rules={[{ required: true, type: "email", message: t("login.emailInvalid") }]}>
                     <Input prefix={<MailOutlined />} size="large" autoComplete="username" autoFocus />
                 </Form.Item>
-                <Form.Item name="password" label={t("login.password")} rules={[{ required: true, message: t("login.passwordRequired") }]}>
+                <Form.Item
+                    name="password"
+                    label={t("login.password")}
+                    rules={[{ required: true, message: t("login.passwordRequired") }]}
+                    extra={
+                        <Link to="/forgot-password" style={{ display: "inline-block", marginTop: 6 }}>
+                            {t("login.forgot")}
+                        </Link>
+                    }
+                >
                     <Input.Password prefix={<LockOutlined />} size="large" autoComplete="current-password" />
                 </Form.Item>
                 <Button type="primary" htmlType="submit" size="large" block loading={loading}>

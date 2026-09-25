@@ -4,6 +4,7 @@ import { DeleteOutlined, EditOutlined, MailOutlined, SendOutlined, UserAddOutlin
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/api";
 import { useAuth } from "@/auth/AuthContext";
+import ApiKeysCard from "@/components/ApiKeysCard";
 import PageHeader from "@/components/PageHeader";
 import { useI18n } from "@/i18n";
 import { formatDate, formatDateTime } from "@/lib/format";
@@ -254,6 +255,7 @@ export default function Team() {
                     scroll={{ x: "max-content" }}
                 />
             </Card>
+            <ApiKeysCard />
             <InviteModal open={inviting} onClose={() => setInviting(false)} />
             <RenameModal open={renaming} account={account} onClose={() => setRenaming(false)} />
         </>

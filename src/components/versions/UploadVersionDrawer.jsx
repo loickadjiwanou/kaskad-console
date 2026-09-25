@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Alert, App, Button, Col, Drawer, Flex, Form, Input, InputNumber, Progress, Row, Select, Typography, Upload } from "antd";
+import { Alert, App, Button, Col, Drawer, Flex, Form, Input, InputNumber, Progress, Radio, Row, Select, Typography, Upload } from "antd";
 import { InboxOutlined } from "@ant-design/icons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/api";
 import MdiIcon from "@/components/MdiIcon";
+import LocalizedChangelog from "./LocalizedChangelog";
 import { useI18n } from "@/i18n";
 import { EXTENSION, formatBytes, formatLabel, PLATFORMS, platformOf, SEMVER } from "@/lib/format";
 import { useApiError } from "@/lib/useApiError";
@@ -63,7 +64,7 @@ export default function UploadVersionDrawer({ app, versions = [], open, onClose,
 
     const submit = (values) => {
         const { file: _f, ...fields } = values;
-        upload.mutate({ values: { ...fields, changelog: fields.changelog ?? "" }, file });
+        upload.mutate({ values: { ...fields, changelog_fr: fields.changelog_fr ?? "", changelog_en: fields.changelog_en ?? "" }, file });
     };
 
     const formats = platformOf(platform)?.formats ?? [];
@@ -92,7 +93,7 @@ export default function UploadVersionDrawer({ app, versions = [], open, onClose,
                 layout="vertical"
                 onFinish={submit}
                 disabled={upload.isPending}
-                initialValues={{ version_code: nextCode }}
+                initialValues={{ version_code: nextCode, channel: "production" }}
                 requiredMark="optional"
             >
                 <Form.Item name="file" label={t("versions.fields.file")} rules={[{ validator: () => (file ? Promise.resolve() : Promise.reject(t("versions.upload.fileRequired"))) }]}>
@@ -169,8 +170,14 @@ export default function UploadVersionDrawer({ app, versions = [], open, onClose,
                         </Form.Item>
                     </Col>
                 </Row>
-                <Form.Item name="changelog" label={t("versions.fields.changelog")}>
-                    <Input.TextArea autoSize={{ minRows: 5, maxRows: 14 }} maxLength={20000} showCount placeholder={t("versions.upload.changelogPlaceholder")} />
+                <Form.Item name="channel" label={t("release.channel")} extra={t("release.channelHelp")}>
+                    <Radio.Group>
+                        <Radio value="production">{t("release.production")}</Radio>
+                        <Radio value="beta">{t("release.beta")}</Radio>
+                    </Radio.Group>
+                </Form.Item>
+                <Form.Item label={t("versions.fields.changelog")} style={{ marginBottom: 0 }}>
+                    <LocalizedChangelog baseLang={app.default_language || "fr"} />
                 </Form.Item>
             </Form>
             {upload.isPending && (

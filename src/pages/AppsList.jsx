@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { api } from "@/api";
 import { useAuth } from "@/auth/AuthContext";
+import { RatingValue } from "@/components/ratings/RatingSummary";
 import AppIcon from "@/components/AppIcon";
 import PageHeader from "@/components/PageHeader";
 import { AppStatusTag, PlatformIcons } from "@/components/Tags";
@@ -97,6 +98,13 @@ export default function AppsList() {
             render: (ids) => ids.map((id) => catName[id]).filter(Boolean).join(", ") || "—",
         },
         { title: t("apps.columns.latest"), dataIndex: "latest_version_name", width: 110, render: (v) => (v ? `v${v}` : "—") },
+        {
+            title: t("apps.columns.rating"),
+            key: "rating",
+            width: 150,
+            responsive: ["md"],
+            render: (_, a) => <RatingValue average={a.rating_average} count={a.rating_count} />,
+        },
         { title: t("apps.columns.downloads"), dataIndex: "downloads_count", width: 140, align: "right", render: formatNumber },
         {
             title: t("apps.columns.pending"),

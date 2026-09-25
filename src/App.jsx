@@ -15,9 +15,11 @@ import AppDetail from "@/pages/AppDetail";
 import AppsList from "@/pages/AppsList";
 import Categories from "@/pages/Categories";
 import Dashboard from "@/pages/Dashboard";
+import ForgotPassword from "@/pages/ForgotPassword";
 import Login from "@/pages/Login";
 import Moderation from "@/pages/Moderation";
 import NotFound from "@/pages/NotFound";
+import ResetPassword from "@/pages/ResetPassword";
 import Signup from "@/pages/Signup";
 import Stats from "@/pages/Stats";
 import Team from "@/pages/Team";
@@ -69,6 +71,8 @@ export default function App() {
                                     <Route path="/login" element={<Login />} />
                                     <Route path="/signup" element={<Signup />} />
                                     <Route path="/verify-email" element={<VerifyEmail />} />
+                                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                                    <Route path="/reset-password" element={<ResetPassword />} />
                                     <Route path="/invite/:token" element={<AcceptInvite />} />
                                     <Route
                                         element={

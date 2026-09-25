@@ -7,20 +7,25 @@ Anyone can **create a developer account** (sign up, then confirm the email addre
 
 - **Dashboard:** published apps, total downloads, versions waiting for review, downloads chart, most downloaded apps, latest releases
 - **Apps:** create and edit app pages (texts, categories, target platforms, featured flag, Android package name), icon and screenshots (drag to reorder), status (draft / published / unpublished), preview of the page as shown in the client app
+- **Release management:** beta channel with a list of testers (email addresses of Kaskad app accounts, at least 3 before a beta can be submitted or published; each new tester gets an invitation email), promotion of a beta to production, scheduled releases (date chosen by the developer or the platform admin), listings and release notes in French and English
+- **API keys** (account owner, *Team* page): publish from continuous integration — a key uploads versions and submits them for review; a GitHub Actions example is shown when a key is created
 - **Versions:** upload with a metadata form (version number, version code, platform, format, release notes), upload progress, live security scan status (queued / scanning / passed / rejected), full scan report, **manual publishing only after the scan has passed**, archive, rescan, download
-- **Moderation** (platform admin): review requests from developers (approve / reject with a reason) and queue of versions being scanned, ready or rejected
+- **Ratings & reviews** (app page tab): rating summary and distribution, reviews with filters, public developer replies (the reviewer is emailed); the platform admin hides or restores reviews
+- **Public page:** shareable link of each published app's web page, which opens the app in Kaskad when it is installed
+- **Moderation** (platform admin): review requests from developers (approve / reject with a reason), queue of versions being scanned, ready or rejected, **app reports** from users (dismiss, handle, unpublish) and **reported user reviews**
 - **Categories:** create, edit (name + icon), reorder by drag and drop, delete (apps are moved to another category), move apps between categories
 - **Statistics:** downloads by period (preset or custom range, daily / weekly / monthly), per app and per version, breakdown by platform and format, CSV export
 - **Activity log** (account owner and platform admin): who did what and when in the account — members' actions, review decisions and scan results — filtered by type or member (and by account for the platform admin)
 - **Team** (account owner): invite members by email, change roles (developer / viewer), deactivate access, rename the account
-- **Developer accounts** (platform admin): every registered account with its owner, members and apps
+- **Developer accounts** (platform admin): every registered account with its owner, members and apps; suspend an account (with a reason emailed to the owner) or reactivate it
 - Themes: Light, Midnight (dark blue), Black (pure black, for OLED screens) or System, like the mobile app
 - **Material Design** option (*My account › Preferences*): Google's Material Design 3 across the whole console — tonal color roles generated from the Kaskad blue (`@material/material-color-utilities`), Roboto typography, M3 shapes (pill buttons and navigation indicator, 28 px dialogs, side sheets), segmented buttons, switches, chips, snackbars and ripple effects; works with all three themes
 - French and English
 
 ### Accounts, roles and review workflow
 
-- **Sign up** creates a developer account; its creator is the **owner**. A confirmation email (Brevo) is sent in the console's current language; the link signs the user in.
+- **Sign up** creates a developer account; its creator is the **owner**. A confirmation email (Brevo) is sent in the console's current language; the link signs the user in. *Forgot password?* on the sign-in page emails a reset link.
+- **Follow-up emails:** the platform admin is emailed for each new review request; members are emailed when their request is approved or rejected (with the reason), in their console language.
 - **Team** (owner): invite people by email as **Developer** (creates and edits apps, uploads versions, submits for review) or **Viewer** (read-only). The invitation email uses the console's language at the time of sending; the link opens a page where the person chooses a name and password.
 - Each account only sees its own apps, statistics, moderation queue and activity log.
 - The **platform admin** (the backend's `ADMIN_EMAIL`, unique, never assignable) sees every account. Only they see the *Moderation*, *Categories* and *Developer accounts* menus.

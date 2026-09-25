@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Alert, App, Button, Card, Checkbox, Col, Flex, Form, Input, Row, Select, Switch, Typography } from "antd";
+import { Alert, App, Button, Card, Checkbox, Col, Flex, Form, Input, Row, Select, Switch, Tabs, Tag, Typography } from "antd";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/api";
 import { useAuth } from "@/auth/AuthContext";
@@ -8,7 +8,38 @@ import { useI18n } from "@/i18n";
 import { PLATFORMS } from "@/lib/format";
 import { useApiError } from "@/lib/useApiError";
 
-const FIELDS = ["name", "short_description", "long_description", "category_ids", "target_platforms", "featured", "android_package"];
+const FIELDS = ["name", "category_ids", "target_platforms", "featured", "android_package"];
+const LANGS = ["fr", "en"];
+const otherLang = (l) => (l === "fr" ? "en" : "fr");
+
+/** Valeurs du formulaire : textes par langue (`short_fr`, `long_en`…) à partir de la fiche (langue principale + traduction). */
+function toForm(listing) {
+    const base = listing.default_language || "fr";
+    const tr = listing.translations?.[otherLang(base)] || {};
+    return {
+        ...Object.fromEntries(FIELDS.map((f) => [f, listing[f]])),
+        default_language: base,
+        [`short_${base}`]: listing.short_description || "",
+        [`long_${base}`]: listing.long_description || "",
+        [`short_${otherLang(base)}`]: tr.short_description || "",
+        [`long_${otherLang(base)}`]: tr.long_description || "",
+    };
+}
+
+/** Corps de mise à jour : textes de la langue principale + traduction dans l'autre langue. */
+function fromForm(values) {
+    const base = values.default_language || "fr";
+    const other = otherLang(base);
+    const rest = Object.fromEntries(FIELDS.map((f) => [f, values[f]]));
+    return {
+        ...rest,
+        android_package: values.android_package || null,
+        default_language: base,
+        short_description: values[`short_${base}`] || "",
+        long_description: values[`long_${base}`] || "",
+        translations: { [other]: { short_description: values[`short_${other}`] || "", long_description: values[`long_${other}`] || "" } },
+    };
+}
 
 /**
  * Formulaire complet de la fiche : textes, catégories, plateformes ciblées, mise en avant.
@@ -26,17 +57,17 @@ export default function AppInfoForm({ app }) {
     const { data: categories } = useQuery({ queryKey: ["categories"], queryFn: api.categories });
 
     useEffect(() => {
-        form.setFieldsValue(Object.fromEntries(FIELDS.map((f) => [f, listing[f]])));
+        form.setFieldsValue(toForm(listing));
     }, [listing, form]);
 
     const save = useMutation({
-        mutationFn: (values) => api.updateApp(app.id, { ...values, android_package: values.android_package || null }),
+        mutationFn: (values) => api.updateApp(app.id, fromForm(values)),
         onSuccess: (updated) => {
             queryClient.setQueryData(["app", app.id], updated);
             queryClient.invalidateQueries({ queryKey: ["apps"] });
             queryClient.invalidateQueries({ queryKey: ["reviews"] });
             form.resetFields();
-            form.setFieldsValue(Object.fromEntries(FIELDS.map((f) => [f, (updated.draft ?? updated)[f]])));
+            form.setFieldsValue(toForm(updated.draft ?? updated));
             message.success(updated.draft ? t("review.listing.savedDraft") : t("common.saved"));
         },
         onError,
@@ -51,11 +82,44 @@ export default function AppInfoForm({ app }) {
                         <Form.Item name="name" label={t("apps.fields.name")} rules={[{ required: true, whitespace: true }]}>
                             <Input maxLength={120} showCount />
                         </Form.Item>
-                        <Form.Item name="short_description" label={t("apps.fields.short")} extra={t("apps.fields.shortHelp")}>
-                            <Input maxLength={200} showCount />
+                        <Form.Item name="default_language" label={t("release.defaultLanguage")} extra={t("release.defaultLanguageHelp")}>
+                            <Select style={{ maxWidth: 240 }} options={LANGS.map((l) => ({ value: l, label: t(`release.lang.${l}`) }))} />
                         </Form.Item>
-                        <Form.Item name="long_description" label={t("apps.fields.long")} extra={t("apps.fields.longHelp")}>
-                            <Input.TextArea autoSize={{ minRows: 8, maxRows: 20 }} maxLength={20000} showCount />
+                        <Form.Item noStyle shouldUpdate={(a, b) => a.default_language !== b.default_language}>
+                            {({ getFieldValue }) => {
+                                const base = getFieldValue("default_language") || "fr";
+                                return (
+                                    <Tabs
+                                        items={[base, otherLang(base)].map((l) => ({
+                                            key: l,
+                                            forceRender: true,
+                                            label: (
+                                                <span>
+                                                    {t(`release.lang.${l}`)}
+                                                    <Tag bordered={false} style={{ marginInlineStart: 6 }}>
+                                                        {l === base ? t("release.primary") : t("release.translation")}
+                                                    </Tag>
+                                                </span>
+                                            ),
+                                            children: (
+                                                <>
+                                                    {l !== base && (
+                                                        <Typography.Paragraph type="secondary" style={{ fontSize: 13 }}>
+                                                            {t("release.listingTranslationHelp", { lang: t(`release.lang.${base}`) })}
+                                                        </Typography.Paragraph>
+                                                    )}
+                                                    <Form.Item name={`short_${l}`} label={t("apps.fields.short")} extra={t("apps.fields.shortHelp")}>
+                                                        <Input maxLength={200} showCount />
+                                                    </Form.Item>
+                                                    <Form.Item name={`long_${l}`} label={t("apps.fields.long")} extra={t("apps.fields.longHelp")}>
+                                                        <Input.TextArea autoSize={{ minRows: 8, maxRows: 20 }} maxLength={20000} showCount />
+                                                    </Form.Item>
+                                                </>
+                                            ),
+                                        }))}
+                                    />
+                                );
+                            }}
                         </Form.Item>
                     </Card>
                 </Col>

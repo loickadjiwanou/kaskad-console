@@ -12,12 +12,18 @@ export const api = {
     signup: (body) => request("/admin/auth/signup", { method: "POST", body }),
     verifyEmail: (token) => request("/admin/auth/verify-email", { method: "POST", body: { token } }),
     resendVerification: (email) => request("/admin/auth/resend-verification", { method: "POST", body: { email } }),
+    forgotPassword: (email) => request("/admin/auth/forgot-password", { method: "POST", body: { email } }),
+    resetPassword: (token, password) => request("/admin/auth/reset-password", { method: "POST", body: { token, password } }),
 
     // Compte développeur, membres et invitations
     renameAccount: (name) => request("/admin/account", { method: "PATCH", body: { name } }),
     accounts: () => request("/admin/accounts"),
+    suspendAccount: (id, suspended, reason) => request(`/admin/accounts/${id}`, { method: "PATCH", body: { suspended, reason } }),
     members: (accountId) => request("/admin/members", { params: { account_id: accountId } }),
     updateMember: (id, body) => request(`/admin/members/${id}`, { method: "PATCH", body }),
+    apiKeys: () => request("/admin/api-keys"),
+    createApiKey: (name) => request("/admin/api-keys", { method: "POST", body: { name } }),
+    revokeApiKey: (id) => request(`/admin/api-keys/${id}`, { method: "DELETE" }),
     invitations: () => request("/admin/invitations"),
     invite: (email, role) => request("/admin/invitations", { method: "POST", body: { email, role } }),
     resendInvitation: (id) => request(`/admin/invitations/${id}/resend`, { method: "POST" }),
@@ -52,6 +58,7 @@ export const api = {
         return upload(`/admin/apps/${id}/screenshots`, form, { onProgress });
     },
     setScreenshots: (id, urls) => request(`/admin/apps/${id}/screenshots`, { method: "PUT", body: { urls } }),
+    setTesters: (id, emails) => request(`/admin/apps/${id}/testers`, { method: "PUT", body: { emails } }),
 
     // Circuit de validation (les éditeurs soumettent, les admins complets valident)
     requestStatus: (id, status, note) => request(`/admin/apps/${id}/status-request`, { method: "POST", body: { status, note } }),
@@ -74,10 +81,12 @@ export const api = {
         return upload(`/admin/apps/${appId}/versions`, form, { onProgress });
     },
     updateVersion: (id, body) => request(`/admin/versions/${id}`, { method: "PATCH", body }),
-    publishVersion: (id) => request(`/admin/versions/${id}/publish`, { method: "POST" }),
+    // Publication (immédiate ou programmée à `publish_at`) ; bêta en ligne → passage en production
+    publishVersion: (id, publish_at) => request(`/admin/versions/${id}/publish`, { method: "POST", body: { publish_at: publish_at || null } }),
+    unscheduleVersion: (id) => request(`/admin/versions/${id}/unschedule`, { method: "POST" }),
     archiveVersion: (id) => request(`/admin/versions/${id}/archive`, { method: "POST" }),
     rescanVersion: (id) => request(`/admin/versions/${id}/rescan`, { method: "POST" }),
-    submitVersion: (id, note) => request(`/admin/versions/${id}/submit`, { method: "POST", body: { note } }),
+    submitVersion: (id, note, publish_at) => request(`/admin/versions/${id}/submit`, { method: "POST", body: { note, publish_at: publish_at || null } }),
     rejectVersion: (id, reason) => request(`/admin/versions/${id}/reject`, { method: "POST", body: { reason } }),
     withdrawVersion: (id) => request(`/admin/versions/${id}/submission`, { method: "DELETE" }),
     versionDownloadUrl: (id) => request(`/admin/versions/${id}/download-url`),
@@ -91,4 +100,15 @@ export const api = {
     moderationQueue: () => request("/admin/moderation/queue"),
     moderationReviews: () => request("/admin/moderation/reviews"),
     activity: (params) => request("/admin/activity", { params }),
+
+    // Notes et avis des utilisateurs, signalements
+    appReviews: (appId, params) => request(`/admin/apps/${appId}/reviews`, { params }),
+    replyReview: (id, body) => request(`/admin/reviews/${id}/reply`, { method: "PUT", body: { body } }),
+    deleteReply: (id) => request(`/admin/reviews/${id}/reply`, { method: "DELETE" }),
+    hideReview: (id, reason) => request(`/admin/reviews/${id}/hide`, { method: "POST", body: { reason } }),
+    restoreReview: (id) => request(`/admin/reviews/${id}/restore`, { method: "POST" }),
+    reviewsSummary: () => request("/admin/reviews-summary"),
+    moderationUserReviews: (filter) => request("/admin/moderation/user-reviews", { params: { filter } }),
+    moderationReports: (status) => request("/admin/moderation/reports", { params: { status } }),
+    resolveReport: (id, body) => request(`/admin/reports/${id}/resolve`, { method: "POST", body }),
 };

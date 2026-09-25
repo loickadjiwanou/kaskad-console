@@ -19,3 +19,19 @@ body {
 *::-webkit-scrollbar {
     display: none;
 }
+
+/* Avis des utilisateurs (onglet Avis d'une app, Modération) */
+.kaskad-review {
+    padding: 16px 0;
+    border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+.kaskad-review:last-child {
+    border-bottom: none;
+}
+.kaskad-review-reply {
+    margin-top: 12px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: var(--ant-color-fill-quaternary);
+    border-left: 3px solid var(--ant-color-primary);
+}

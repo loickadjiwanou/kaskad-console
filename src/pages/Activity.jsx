@@ -9,8 +9,8 @@ import PageHeader from "@/components/PageHeader";
 import { useI18n } from "@/i18n";
 import { formatDateTime } from "@/lib/format";
 
-const ACTION_COLORS = { app: "blue", version: "purple", category: "cyan", member: "gold", account: "magenta" };
-const FILTERS = ["app", "version", "category", "member", "account"];
+const ACTION_COLORS = { app: "blue", version: "purple", category: "cyan", member: "gold", account: "magenta", review: "green", report: "red" };
+const FILTERS = ["app", "version", "category", "member", "account", "review", "report"];
 
 /** Résumé lisible des détails d'une entrée du journal. */
 function Details({ entry }) {
@@ -27,7 +27,12 @@ function Details({ entry }) {
     if (d.status) parts.push(t(`review.status.target.${d.status}`));
     if (d.requested_by) parts.push(t("activity.requestedBy", { name: d.requested_by }));
     if (d.draft) parts.push(t("activity.inDraft"));
-    if (d.reason) parts.push(`${t("review.reason")} : ${d.reason}`);
+    if (d.channel === "beta") parts.push(t("release.beta"));
+    if (d.publish_at) parts.push(`${t("release.publishAt")} : ${formatDateTime(d.publish_at)}`);
+    if (d.rating) parts.push("★".repeat(d.rating));
+    // Motif d'un signalement (code traduit) ou motif saisi
+    if (d.reason) parts.push(`${t("review.reason")} : ${entry.action.startsWith("report.") ? t(`ratings.reasons.${d.reason}`) : d.reason === "report" ? t("reports.reportReason") : d.reason}`);
+    if (d.note) parts.push(`« ${d.note} »`);
     if (Array.isArray(d.fields) && d.fields.length) parts.push(d.fields.join(", "));
     if (d.count != null) parts.push(`× ${d.count}`);
     if (d.moved != null) parts.push(t("activity.moved", { count: d.moved }));

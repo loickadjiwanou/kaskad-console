@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { App, Button, Descriptions, Drawer, Flex, Form, Input, Typography } from "antd";
+import { App, Button, Descriptions, Drawer, Flex, Form, Input, Radio, Typography } from "antd";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/api";
 import ScanReport from "@/components/ScanReport";
-import { PlatformTag, ScanTag, VersionStatusTag } from "@/components/Tags";
+import { ChannelTag, PlatformTag, ScanTag, VersionStatusTag } from "@/components/Tags";
+import LocalizedChangelog, { changelogFromForm, changelogToForm, LANGS } from "./LocalizedChangelog";
 import { useI18n } from "@/i18n";
 import { formatBytes, formatDateTime, formatNumber, SEMVER } from "@/lib/format";
 import { useApiError } from "@/lib/useApiError";
@@ -13,7 +14,7 @@ import VersionPrimaryAction from "./VersionPrimaryAction";
 import { isScanning, useVersionActions } from "./useVersionActions";
 
 /** Détail d'une version : métadonnées, rapport d'analyse, édition du changelog et actions. */
-export default function VersionDrawer({ versionId, appName, appStatus, onClose }) {
+export default function VersionDrawer({ versionId, appName, appStatus, testers, minTesters, onClose }) {
     const { t } = useI18n();
     const { message } = App.useApp();
     const onError = useApiError();
@@ -31,12 +32,17 @@ export default function VersionDrawer({ versionId, appName, appStatus, onClose }
     });
 
     useEffect(() => {
-        if (v) form.setFieldsValue({ version_name: v.version_name, changelog: v.changelog });
+        if (v) form.setFieldsValue({ version_name: v.version_name, channel: v.channel || "production", ...changelogToForm(v) });
     }, [v, form]);
     useEffect(() => setEditing(false), [versionId]);
 
     const save = useMutation({
-        mutationFn: (values) => api.updateVersion(versionId, values),
+        mutationFn: ({ version_name, channel, ...texts }) =>
+            api.updateVersion(versionId, {
+                version_name,
+                ...(v?.status === "draft" ? { channel } : {}),
+                ...changelogFromForm(texts, v?.changelog_lang || "fr"),
+            }),
         onSuccess: (next) => {
             queryClient.setQueryData(["version", versionId], next);
             queryClient.invalidateQueries({ queryKey: ["versions", next.app_id] });
@@ -46,7 +52,7 @@ export default function VersionDrawer({ versionId, appName, appStatus, onClose }
         onError,
     });
 
-    const ctx = { appName, appStatus };
+    const ctx = { appName, appStatus, testers, minTesters };
     return (
         <Drawer
             open={!!versionId}
@@ -84,7 +90,11 @@ export default function VersionDrawer({ versionId, appName, appStatus, onClose }
                         items={[
                             { label: t("versions.fields.platform"), children: <PlatformTag platform={v.platform} format={v.file_format} /> },
                             { label: t("versions.fields.versionCode"), children: v.version_code },
-                            { label: t("versions.fields.status"), children: <VersionStatusTag status={v.status} /> },
+                            { label: t("versions.fields.status"), children: <VersionStatusTag status={v.status} scheduledAt={v.scheduled_at} /> },
+                            {
+                                label: t("release.channel"),
+                                children: v.channel === "beta" ? <ChannelTag channel="beta" /> : t("release.production"),
+                            },
                             { label: t("versions.fields.scan"), children: <ScanTag status={v.security_scan_status} /> },
                             { label: t("versions.fields.file"), children: v.file_name },
                             { label: t("versions.fields.size"), children: formatBytes(v.file_size) },
@@ -122,9 +132,15 @@ export default function VersionDrawer({ versionId, appName, appStatus, onClose }
                                 >
                                     <Input />
                                 </Form.Item>
-                                <Form.Item name="changelog">
-                                    <Input.TextArea autoSize={{ minRows: 4, maxRows: 14 }} maxLength={20000} />
-                                </Form.Item>
+                                {v.status === "draft" && (
+                                    <Form.Item name="channel" label={t("release.channel")}>
+                                        <Radio.Group>
+                                            <Radio value="production">{t("release.production")}</Radio>
+                                            <Radio value="beta">{t("release.beta")}</Radio>
+                                        </Radio.Group>
+                                    </Form.Item>
+                                )}
+                                <LocalizedChangelog baseLang={v.changelog_lang || "fr"} />
                                 <Flex gap={8} justify="flex-end">
                                     <Button onClick={() => setEditing(false)}>{t("common.cancel")}</Button>
                                     <Button type="primary" htmlType="submit" loading={save.isPending}>
@@ -133,9 +149,21 @@ export default function VersionDrawer({ versionId, appName, appStatus, onClose }
                                 </Flex>
                             </Form>
                         ) : (
-                            <Typography.Paragraph style={{ whiteSpace: "pre-line" }} type={v.changelog ? undefined : "secondary"}>
-                                {v.changelog || t("versions.noChangelog")}
-                            </Typography.Paragraph>
+                            <Flex vertical gap={8}>
+                                {LANGS.map((l) => {
+                                    const text = changelogToForm(v)[`changelog_${l}`];
+                                    return (
+                                        <div key={l}>
+                                            <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                                                {t(`release.lang.${l}`)}
+                                            </Typography.Text>
+                                            <Typography.Paragraph style={{ whiteSpace: "pre-line", margin: 0 }} type={text ? undefined : "secondary"}>
+                                                {text || t("versions.noChangelog")}
+                                            </Typography.Paragraph>
+                                        </div>
+                                    );
+                                })}
+                            </Flex>
                         )}
                     </div>
 

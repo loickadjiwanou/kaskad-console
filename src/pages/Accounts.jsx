@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { App, Avatar, Card, Flex, Input, Switch, Table, Tag, Typography } from "antd";
-import { SearchOutlined } from "@ant-design/icons";
+import { App, Avatar, Button, Card, Flex, Input, Switch, Table, Tag, Tooltip, Typography } from "antd";
+import { SearchOutlined, StopOutlined, UndoOutlined } from "@ant-design/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/api";
 import PageHeader from "@/components/PageHeader";
+import { usePrompt } from "@/components/review/usePrompt";
 import { useI18n } from "@/i18n";
 import { formatDate, formatDateTime, formatNumber } from "@/lib/format";
 import { useApiError } from "@/lib/useApiError";
@@ -61,7 +62,39 @@ function AccountMembers({ account }) {
 /** Administrateur de la plateforme : tous les comptes développeurs inscrits. */
 export default function Accounts() {
     const { t } = useI18n();
+    const { message, modal } = App.useApp();
+    const onError = useApiError();
+    const prompt = usePrompt();
+    const queryClient = useQueryClient();
     const [q, setQ] = useState("");
+
+    // Suspension d'un compte entier : apps retirées du store, membres déconnectés, propriétaire prévenu par e-mail
+    const setSuspended = (account, suspended, reason) =>
+        api
+            .suspendAccount(account.id, suspended, reason)
+            .then(() => {
+                queryClient.invalidateQueries({ queryKey: ["accounts"] });
+                queryClient.invalidateQueries({ queryKey: ["apps"] });
+                message.success(t(suspended ? "accounts.suspended" : "accounts.reactivated", { name: account.name }));
+            })
+            .catch(onError);
+    const suspend = (account) =>
+        prompt({
+            title: t("accounts.suspendTitle", { name: account.name }),
+            text: t("accounts.suspendText"),
+            label: t("review.reason"),
+            placeholder: t("accounts.reasonPlaceholder"),
+            okText: t("accounts.suspend"),
+            danger: true,
+            onOk: (reason) => setSuspended(account, true, reason),
+        });
+    const reactivate = (account) =>
+        modal.confirm({
+            title: t("accounts.reactivateTitle", { name: account.name }),
+            content: t("accounts.reactivateText"),
+            okText: t("accounts.reactivate"),
+            onOk: () => setSuspended(account, false),
+        });
     const { data = [], isLoading } = useQuery({ queryKey: ["accounts"], queryFn: api.accounts });
     const rows = data.filter((a) => !q || `${a.name} ${a.owner?.name} ${a.owner?.email}`.toLowerCase().includes(q.toLowerCase()));
 
@@ -111,7 +144,35 @@ export default function Accounts() {
                         },
                         { title: t("accounts.columns.members"), dataIndex: "members_count", align: "right", render: formatNumber },
                         { title: t("accounts.columns.apps"), dataIndex: "apps_count", align: "right", render: formatNumber },
-                        { title: t("accounts.columns.created"), dataIndex: "created_at", render: formatDate },
+                        { title: t("accounts.columns.created"), dataIndex: "created_at", render: formatDate, responsive: ["lg"] },
+                        {
+                            title: t("accounts.columns.state"),
+                            key: "state",
+                            render: (_, a) =>
+                                a.suspended ? (
+                                    <Tooltip title={a.suspension_reason ? `${t("review.reason")} : ${a.suspension_reason}` : undefined}>
+                                        <Tag color="error" icon={<StopOutlined />}>
+                                            {t("accounts.stateSuspended")}
+                                        </Tag>
+                                    </Tooltip>
+                                ) : (
+                                    <Tag color="success">{t("accounts.stateActive")}</Tag>
+                                ),
+                        },
+                        {
+                            key: "actions",
+                            align: "right",
+                            render: (_, a) =>
+                                a.platform ? null : a.suspended ? (
+                                    <Button size="small" icon={<UndoOutlined />} onClick={() => reactivate(a)}>
+                                        {t("accounts.reactivate")}
+                                    </Button>
+                                ) : (
+                                    <Button size="small" danger icon={<StopOutlined />} onClick={() => suspend(a)}>
+                                        {t("accounts.suspend")}
+                                    </Button>
+                                ),
+                        },
                     ]}
                 />
             </Card>

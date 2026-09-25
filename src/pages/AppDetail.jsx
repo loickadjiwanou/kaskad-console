@@ -1,10 +1,11 @@
-import { Alert, Button, Dropdown, Flex, Result, Skeleton, Tabs, Typography } from "antd";
-import { ArrowLeftOutlined, DownOutlined, EyeOutlined } from "@ant-design/icons";
+import { Alert, Badge, Button, Dropdown, Flex, Popover, Result, Skeleton, Tabs, Typography } from "antd";
+import { ArrowLeftOutlined, DownOutlined, EyeOutlined, ShareAltOutlined } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { api } from "@/api";
 import { useAuth } from "@/auth/AuthContext";
 import AppIcon from "@/components/AppIcon";
+import PublicLinkCard from "@/components/ratings/PublicLinkCard";
 import PageHeader from "@/components/PageHeader";
 import ReviewBanner from "@/components/review/ReviewBanner";
 import { useAppReview } from "@/components/review/useAppReview";
@@ -14,6 +15,7 @@ import { formatDateTime } from "@/lib/format";
 import AppInfoForm from "./app/AppInfoForm";
 import AppMedia from "./app/AppMedia";
 import AppPreview from "./app/AppPreview";
+import AppReviews from "./app/AppReviews";
 import AppStats from "./app/AppStats";
 import AppVersions from "./app/AppVersions";
 
@@ -212,6 +214,9 @@ export default function AppDetail() {
                 subtitle={app.short_description}
                 extra={
                     <>
+                        <Popover trigger="click" placement="bottomRight" title={t("share.title")} content={<PublicLinkCard app={app} bordered={false} />}>
+                            <Button icon={<ShareAltOutlined />}>{t("share.button")}</Button>
+                        </Popover>
                         <Button icon={<EyeOutlined />} onClick={() => setParams({ tab: "preview" })}>
                             {t("apps.tabs.preview")}
                         </Button>
@@ -229,6 +234,16 @@ export default function AppDetail() {
                     { key: "info", label: t("apps.tabs.info"), children: <AppInfoForm app={app} /> },
                     { key: "media", label: t("apps.tabs.media"), children: <AppMedia app={app} /> },
                     { key: "versions", label: t("apps.tabs.versions"), children: <AppVersions app={app} /> },
+                    {
+                        key: "reviews",
+                        label: (
+                            <Flex align="center" gap={6}>
+                                {t("apps.tabs.reviews")}
+                                {app.rating_count > 0 && <Badge count={app.rating_count} overflowCount={999} size="small" color="var(--ant-color-text-quaternary)" />}
+                            </Flex>
+                        ),
+                        children: <AppReviews app={app} />,
+                    },
                     { key: "stats", label: t("apps.tabs.stats"), children: <AppStats app={app} /> },
                     { key: "preview", label: t("apps.tabs.preview"), children: <AppPreview app={app} initialDraft={params.get("draft") === "1"} /> },
                 ]}

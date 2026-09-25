@@ -1,19 +1,21 @@
 import { useState } from "react";
 import { Badge, Button, Card, Empty, Flex, Segmented, Table, Tabs, Tag, Typography } from "antd";
-import { ReloadOutlined } from "@ant-design/icons";
-import { useQuery } from "@tanstack/react-query";
+import { ClockCircleOutlined, ReloadOutlined } from "@ant-design/icons";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "@/api";
 import AppIcon from "@/components/AppIcon";
 import PageHeader from "@/components/PageHeader";
 import { ReviewTag } from "@/components/review/ReviewBanner";
 import { useAppReview } from "@/components/review/useAppReview";
-import { PlatformTag, ScanTag } from "@/components/Tags";
+import { ChannelTag, PlatformTag, ScanTag, VersionStatusTag } from "@/components/Tags";
 import VersionDrawer from "@/components/versions/VersionDrawer";
 import VersionPrimaryAction from "@/components/versions/VersionPrimaryAction";
 import { canPublish, isScanning, useVersionActions } from "@/components/versions/useVersionActions";
 import { useI18n } from "@/i18n";
 import { formatBytes, formatDateTime } from "@/lib/format";
+import ReportsTab from "./moderation/ReportsTab";
+import UserReviewsTab from "./moderation/UserReviewsTab";
 
 const SCAN_GROUPS = {
     all: () => true,
@@ -39,7 +41,15 @@ function ReviewsTab({ reviews, loading, onOpenVersion }) {
     const visible = rows.filter((r) => r.review.state === state);
 
     const subject = (r) => {
-        if (r.kind === "version") return <PlatformTag platform={r.item.platform} format={r.item.file_format} />;
+        if (r.kind === "version")
+            return (
+                <Flex gap={4} wrap>
+                    <PlatformTag platform={r.item.platform} format={r.item.file_format} />
+                    <ChannelTag channel={r.item.channel} />
+                    {r.review.kind === "promote" && <Tag color="purple">{t("release.promotionRequest")}</Tag>}
+                    {r.review.publish_at && <Tag icon={<ClockCircleOutlined />}>{formatDateTime(r.review.publish_at)}</Tag>}
+                </Flex>
+            );
         if (r.kind === "status") return <Typography.Text>{t(`review.status.target.${r.review.status}`)}</Typography.Text>;
         return <Typography.Text>{t("review.kinds.listingText")}</Typography.Text>;
     };
@@ -200,6 +210,8 @@ function ScanTab({ queue, loading, onOpenVersion }) {
                 <div>
                     <Flex gap={4} wrap>
                         <ScanTag status={v.security_scan_status} />
+                        {v.status === "scheduled" && <VersionStatusTag status="scheduled" scheduledAt={v.scheduled_at} />}
+                        <ChannelTag channel={v.channel} />
                         <ReviewTag review={v.review} />
                     </Flex>
                     {v.scan_report?.errors?.length > 0 && (
@@ -262,12 +274,13 @@ function ScanTab({ queue, loading, onOpenVersion }) {
     );
 }
 
-/** Modération : demandes de validation (éditeurs → admins complets) et file de l'analyse de sécurité. */
+/** Modération : demandes de validation, analyse de sécurité, signalements d'apps et avis signalés. */
 export default function Moderation() {
     const { t } = useI18n();
     const [params, setParams] = useSearchParams();
     const tab = params.get("tab") || "reviews";
     const [selected, setSelected] = useState(null);
+    const queryClient = useQueryClient();
 
     const scan = useQuery({
         queryKey: ["moderation"],
@@ -275,6 +288,8 @@ export default function Moderation() {
         refetchInterval: (q) => (q.state.data?.some(isScanning) ? 3000 : 30000),
     });
     const reviews = useQuery({ queryKey: ["reviews"], queryFn: api.moderationReviews, refetchInterval: 30000 });
+    // Signalements ouverts et avis signalés (badges des onglets)
+    const { data: overview } = useQuery({ queryKey: ["overview"], queryFn: api.overview, refetchInterval: 30000 });
     const d = reviews.data;
     const pendingReviews =
         (d?.versions ?? []).filter((v) => v.review?.state === "pending").length +
@@ -293,6 +308,9 @@ export default function Moderation() {
                         onClick={() => {
                             scan.refetch();
                             reviews.refetch();
+                            queryClient.invalidateQueries({ queryKey: ["reports"] });
+                            queryClient.invalidateQueries({ queryKey: ["userReviews"] });
+                            queryClient.invalidateQueries({ queryKey: ["overview"] });
                         }}
                     >
                         {t("common.refresh")}
@@ -319,6 +337,26 @@ export default function Moderation() {
                             key: "scan",
                             label: t("moderation.tabs.scan"),
                             children: <ScanTab queue={scan.data ?? []} loading={scan.isLoading} onOpenVersion={(v) => setSelected(v)} />,
+                        },
+                        {
+                            key: "reports",
+                            label: (
+                                <Flex align="center" gap={8}>
+                                    {t("moderation.tabs.reports")}
+                                    <Badge count={overview?.reports_open ?? 0} size="small" />
+                                </Flex>
+                            ),
+                            children: <ReportsTab />,
+                        },
+                        {
+                            key: "user-reviews",
+                            label: (
+                                <Flex align="center" gap={8}>
+                                    {t("moderation.tabs.userReviews")}
+                                    <Badge count={overview?.user_reviews_reported ?? 0} size="small" />
+                                </Flex>
+                            ),
+                            children: <UserReviewsTab />,
                         },
                     ]}
                 />

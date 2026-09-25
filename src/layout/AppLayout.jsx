@@ -39,7 +39,8 @@ export default function AppLayout() {
     // Nombre de versions en attente (badge du menu Modération)
     const { data: overview } = useQuery({ queryKey: ["overview"], queryFn: api.overview, refetchInterval: 30_000 });
     // Demandes à valider (badge du menu Modération, administrateur de la plateforme)
-    const pending = overview?.reviews_pending ?? 0;
+    // + signalements d'apps ouverts et avis signalés
+    const pending = (overview?.reviews_pending ?? 0) + (overview?.reports_open ?? 0) + (overview?.user_reviews_reported ?? 0);
 
     const items = [
         { key: "/", icon: <DashboardOutlined />, label: t("nav.dashboard") },
@@ -77,6 +78,17 @@ export default function AppLayout() {
         if (mobile) setCollapsed(true);
     };
 
+    // Bas de la barre latérale : mon compte et déconnexion
+    const signOut = async () => {
+        await logout();
+        navigate("/login");
+    };
+    const bottomItems = [
+        { key: "/account", icon: <UserOutlined />, label: t("nav.account") },
+        { key: "logout", icon: <LogoutOutlined />, label: t("nav.logout"), danger: true },
+    ];
+    const goBottom = ({ key }) => (key === "logout" ? signOut() : go({ key }));
+
     const userMenu = {
         items: [
             { key: "account", icon: <UserOutlined />, label: t("nav.account") },
@@ -85,10 +97,7 @@ export default function AppLayout() {
         ],
         onClick: async ({ key }) => {
             if (key === "account") navigate("/account");
-            if (key === "logout") {
-                await logout();
-                navigate("/login");
-            }
+            if (key === "logout") await signOut();
         },
     };
 
@@ -103,20 +112,31 @@ export default function AppLayout() {
                 trigger={null}
                 style={{ position: "sticky", top: 0, height: "100vh", borderRight: "1px solid var(--ant-color-border-secondary)", zIndex: 20 }}
             >
-                <Flex align="center" gap={10} style={{ height: 64, padding: collapsed ? "0 22px" : "0 20px" }}>
-                    <img src="/logo.png" alt="" width={32} height={32} />
-                    {!collapsed && (
-                        <div style={{ lineHeight: 1.1 }}>
-                            <Typography.Text strong style={{ fontSize: 17, letterSpacing: -0.3 }}>
-                                Kaskad
-                            </Typography.Text>
-                            <Typography.Text type="secondary" style={{ display: "block", fontSize: 11, fontWeight: 600, letterSpacing: 0.6 }}>
-                                CONSOLE
-                            </Typography.Text>
-                        </div>
-                    )}
+                <Flex vertical style={{ height: "100%" }}>
+                    <Flex align="center" gap={10} style={{ height: 64, flexShrink: 0, padding: collapsed ? "0 22px" : "0 20px" }}>
+                        <img src="/logo.png" alt="" width={32} height={32} />
+                        {!collapsed && (
+                            <div style={{ lineHeight: 1.1 }}>
+                                <Typography.Text strong style={{ fontSize: 17, letterSpacing: -0.3 }}>
+                                    Kaskad
+                                </Typography.Text>
+                                <Typography.Text type="secondary" style={{ display: "block", fontSize: 11, fontWeight: 600, letterSpacing: 0.6 }}>
+                                    CONSOLE
+                                </Typography.Text>
+                            </div>
+                        )}
+                    </Flex>
+                    <div style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+                        <Menu mode="inline" items={items} selectedKeys={selected} onClick={go} style={{ borderInlineEnd: "none", padding: "8px 10px" }} />
+                    </div>
+                    <Menu
+                        mode="inline"
+                        items={bottomItems}
+                        selectedKeys={location.pathname.startsWith("/account") ? ["/account"] : []}
+                        onClick={goBottom}
+                        style={{ borderInlineEnd: "none", padding: "8px 10px", flexShrink: 0, borderTop: "1px solid var(--ant-color-border-secondary)" }}
+                    />
                 </Flex>
-                <Menu mode="inline" items={items} selectedKeys={selected} onClick={go} style={{ borderInlineEnd: "none", padding: "8px 10px" }} />
             </Sider>
             <Layout>
                 <Header
