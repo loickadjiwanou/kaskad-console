@@ -8,6 +8,7 @@ import {
     HistoryOutlined,
     LogoutOutlined,
     MenuOutlined,
+    MoonFilled,
     MoonOutlined,
     SafetyCertificateOutlined,
     SunOutlined,
@@ -44,8 +45,13 @@ export default function AppLayout() {
         { key: "/", icon: <DashboardOutlined />, label: t("nav.dashboard") },
         { key: "/apps", icon: <AppstoreOutlined />, label: t("nav.apps") },
         { key: "/stats", icon: <BarChartOutlined />, label: t("nav.stats") },
-        { key: "/activity", icon: <HistoryOutlined />, label: t("nav.activity") },
-        ...(canManageTeam ? [{ key: "/team", icon: <TeamOutlined />, label: t("nav.team") }] : []),
+        // Journal d'activité et équipe : propriétaires du compte (et administrateur de la plateforme)
+        ...(canManageTeam
+            ? [
+                  { key: "/activity", icon: <HistoryOutlined />, label: t("nav.activity") },
+                  { key: "/team", icon: <TeamOutlined />, label: t("nav.team") },
+              ]
+            : []),
         // Réservés à l'administrateur de la plateforme : absents du menu des comptes développeurs
         ...(isFullAdmin
             ? [
@@ -135,6 +141,7 @@ export default function AppLayout() {
                             { value: "light", icon: <Tooltip title={t("theme.light")}><SunOutlined /></Tooltip> },
                             { value: "system", icon: <Tooltip title={t("theme.system")}><DesktopOutlined /></Tooltip> },
                             { value: "dark", icon: <Tooltip title={t("theme.dark")}><MoonOutlined /></Tooltip> },
+                            { value: "black", icon: <Tooltip title={t("theme.black")}><MoonFilled /></Tooltip> },
                         ]}
                     />
                     {admin?.role === "viewer" && (
@@ -144,7 +151,7 @@ export default function AppLayout() {
                     )}
                     <Segmented size="small" value={lang} onChange={setLang} options={[{ value: "fr", label: "FR" }, { value: "en", label: "EN" }]} />
                     <Dropdown menu={userMenu} placement="bottomRight" trigger={["click"]}>
-                        <Button type="text" style={{ height: 44 }}>
+                        <Button type="text" className="md-neutral" style={{ height: 44 }}>
                             <Flex align="center" gap={10}>
                                 <Avatar style={{ background: "var(--ant-color-primary)" }}>{(admin?.name || admin?.email || "?")[0].toUpperCase()}</Avatar>
                                 {screens.md && (

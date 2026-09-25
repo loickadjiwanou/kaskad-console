@@ -11,3 +11,11 @@ body {
 .kaskad-clickable-row {
     cursor: pointer;
 }
+
+/* Barres de défilement masquées partout (le défilement reste actif : molette, pavé tactile, clavier, toucher) */
+* {
+    scrollbar-width: none;
+}
+*::-webkit-scrollbar {
+    display: none;
+}

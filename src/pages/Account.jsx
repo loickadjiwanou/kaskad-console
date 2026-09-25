@@ -1,5 +1,6 @@
 import { useEffect } from "react";
-import { App, Button, Card, Col, Descriptions, Form, Input, Row, Segmented, Tag } from "antd";
+import { App, Button, Card, Col, Descriptions, Flex, Form, Input, Row, Segmented, Switch, Tag, Typography } from "antd";
+import { DesktopOutlined, MoonFilled, MoonOutlined, SunOutlined } from "@ant-design/icons";
 import { useMutation } from "@tanstack/react-query";
 import { api } from "@/api";
 import { useAuth } from "@/auth/AuthContext";
@@ -7,12 +8,14 @@ import PageHeader from "@/components/PageHeader";
 import { useI18n } from "@/i18n";
 import { formatDate } from "@/lib/format";
 import { useApiError } from "@/lib/useApiError";
-import { useThemeMode } from "@/theme";
+import { MODES, useThemeMode } from "@/theme";
+
+const THEME_ICONS = { light: <SunOutlined />, system: <DesktopOutlined />, dark: <MoonOutlined />, black: <MoonFilled /> };
 
 /** Mon compte : profil, mot de passe, préférences d'affichage. */
 export default function Account() {
     const { t, lang, setLang } = useI18n();
-    const { mode, setMode } = useThemeMode();
+    const { mode, setMode, material, setMaterial } = useThemeMode();
     const { admin, setAdmin } = useAuth();
     const { message } = App.useApp();
     const onError = useApiError();
@@ -67,8 +70,20 @@ export default function Account() {
                     </Card>
                     <Card title={t("account.preferences")}>
                         <Form layout="vertical">
-                            <Form.Item label={t("account.theme")}>
-                                <Segmented value={mode} onChange={setMode} options={["light", "system", "dark"].map((m) => ({ value: m, label: t(`theme.${m}`) }))} />
+                            <Form.Item label={t("account.theme")} extra={t("account.themeHelp")}>
+                                <Segmented
+                                    value={mode}
+                                    onChange={setMode}
+                                    options={MODES.map((m) => ({ value: m, label: t(`theme.${m}`), icon: THEME_ICONS[m] }))}
+                                />
+                            </Form.Item>
+                            <Form.Item label={t("account.material")}>
+                                <Flex align="flex-start" gap={16} justify="space-between">
+                                    <Typography.Text type="secondary" style={{ fontSize: 13 }}>
+                                        {t("account.materialHelp")}
+                                    </Typography.Text>
+                                    <Switch checked={material} onChange={setMaterial} aria-label={t("account.material")} />
+                                </Flex>
                             </Form.Item>
                             <Form.Item label={t("account.language")} style={{ marginBottom: 0 }}>
                                 <Segmented

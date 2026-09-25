@@ -1,0 +1,464 @@
+/*
+ * Material Design 3 — compléments aux jetons Ant Design (theme/material.js).
+ * Actif uniquement quand la préférence « Material Design » est activée (html[data-material="true"]).
+ * Couleurs : variables --md-sys-color-* générées à partir du bleu Kaskad.
+ */
+
+:root[data-material="true"] {
+    --md-state-hover: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
+    --md-state-pressed: color-mix(in srgb, var(--md-sys-color-on-surface) 10%, transparent);
+    --md-ease: cubic-bezier(0.2, 0, 0, 1);
+}
+
+:root[data-material="true"] body {
+    font-family: Roboto, system-ui, -apple-system, "Segoe UI", sans-serif;
+    letter-spacing: 0.015em;
+}
+
+/* ------------------------------------------------------------ onde (ripple) */
+
+:root[data-material="true"] :is(
+        .ant-btn,
+        .ant-menu-item,
+        .ant-menu-submenu-title,
+        .ant-tabs-tab,
+        .ant-dropdown-menu-item,
+        .ant-select-item-option,
+        .ant-pagination-item,
+        .ant-pagination-prev,
+        .ant-pagination-next,
+        .ant-card-hoverable,
+        .md-ripple-host
+    ) {
+    position: relative;
+    overflow: hidden;
+}
+
+.md-ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.12;
+    transform: scale(0);
+    pointer-events: none;
+    animation: md-ripple-in 450ms var(--md-ease, ease-out) forwards;
+}
+.md-ripple-out {
+    opacity: 0;
+    transition: opacity 300ms linear;
+}
+@keyframes md-ripple-in {
+    to {
+        transform: scale(1);
+    }
+}
+
+/* Indicateur de focus clavier */
+:root[data-material="true"] :is(.ant-btn, .ant-menu-item, .ant-tabs-tab-btn, .ant-switch, .ant-pagination-item):focus-visible {
+    outline: 3px solid var(--md-sys-color-secondary);
+    outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------ typographie */
+
+/* Titres : échelle « headline » (graisse régulière), titres de section : « title » (medium) */
+:root[data-material="true"] h1.ant-typography,
+:root[data-material="true"] h2.ant-typography,
+:root[data-material="true"] h3.ant-typography {
+    font-weight: 400 !important;
+    letter-spacing: 0 !important;
+}
+:root[data-material="true"] h3.ant-typography {
+    font-size: 28px !important;
+    line-height: 36px !important;
+}
+:root[data-material="true"] h4.ant-typography,
+:root[data-material="true"] h5.ant-typography {
+    font-weight: 500 !important;
+    letter-spacing: 0.01em;
+}
+:root[data-material="true"] .ant-typography strong {
+    font-weight: 500;
+}
+
+/* ------------------------------------------------------------ boutons */
+
+:root[data-material="true"] .ant-btn {
+    letter-spacing: 0.1px;
+    box-shadow: none;
+    transition:
+        background-color 0.2s var(--md-ease),
+        box-shadow 0.2s var(--md-ease),
+        color 0.2s var(--md-ease);
+}
+/* Bouton plein (« filled ») : élévation au survol */
+:root[data-material="true"] .ant-btn-variant-solid.ant-btn-color-primary:not(:disabled):hover {
+    box-shadow: var(--md-sys-elevation-1);
+}
+/* Bouton tonal : boutons pleins dans les bandeaux et barres d'outils (small) */
+:root[data-material="true"] .ant-alert .ant-btn-variant-solid.ant-btn-color-primary {
+    background: var(--md-sys-color-primary);
+}
+/* Bouton « outlined » : bordure outline, libellé primaire */
+:root[data-material="true"] .ant-btn-variant-outlined.ant-btn-color-default {
+    border-color: var(--md-sys-color-outline);
+}
+/* Boutons d'erreur */
+:root[data-material="true"] .ant-btn-color-dangerous.ant-btn-variant-outlined,
+:root[data-material="true"] .ant-btn-color-dangerous.ant-btn-variant-text {
+    color: var(--md-sys-color-error);
+}
+:root[data-material="true"] .ant-btn-color-dangerous.ant-btn-variant-outlined {
+    border-color: var(--md-sys-color-outline);
+}
+:root[data-material="true"] .ant-btn-color-dangerous.ant-btn-variant-solid {
+    background: var(--md-sys-color-error);
+    color: var(--md-sys-color-on-error);
+}
+/* Boutons icône : cercles */
+:root[data-material="true"] .ant-btn-icon-only:not(.ant-btn-compact-item) {
+    border-radius: 50% !important;
+}
+/* Bouton scindé (action + menu) : segments joints */
+:root[data-material="true"] .ant-btn-compact-first-item {
+    border-start-end-radius: 4px !important;
+    border-end-end-radius: 4px !important;
+}
+:root[data-material="true"] .ant-btn-compact-last-item {
+    border-start-start-radius: 4px !important;
+    border-end-start-radius: 4px !important;
+    padding-inline: 12px;
+}
+/* Boutons neutres (compte utilisateur de la barre supérieure) */
+:root[data-material="true"] .ant-btn.md-neutral {
+    color: var(--md-sys-color-on-surface);
+}
+:root[data-material="true"] .ant-btn-icon-only.ant-btn-variant-text {
+    color: var(--md-sys-color-on-surface-variant);
+}
+:root[data-material="true"] .ant-btn:disabled,
+:root[data-material="true"] .ant-btn.ant-btn-disabled {
+    background: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent) !important;
+    color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent) !important;
+    border-color: transparent !important;
+}
+:root[data-material="true"] .ant-btn-variant-text:disabled,
+:root[data-material="true"] .ant-btn-variant-link:disabled {
+    background: transparent !important;
+}
+
+/* ------------------------------------------------------------ navigation */
+
+/* Tiroir de navigation : sans bordure, indicateur actif en pilule */
+:root[data-material="true"] .ant-layout-sider {
+    border-inline-end: none !important;
+}
+:root[data-material="true"] .ant-menu-inline .ant-menu-item,
+:root[data-material="true"] .ant-menu-vertical .ant-menu-item {
+    font-weight: 500;
+    letter-spacing: 0.1px;
+    margin-block: 0;
+}
+:root[data-material="true"] .ant-menu-item .ant-badge-count {
+    background: var(--md-sys-color-error);
+    color: var(--md-sys-color-on-error);
+    box-shadow: none;
+}
+/* Barre d'application supérieure */
+:root[data-material="true"] .ant-layout-header {
+    border-bottom: none !important;
+    transition: background-color 0.2s var(--md-ease);
+}
+
+/* Onglets : indicateur de 3 px aux coins supérieurs arrondis */
+:root[data-material="true"] .ant-tabs-ink-bar {
+    height: 3px !important;
+    border-radius: 3px 3px 0 0;
+}
+:root[data-material="true"] .ant-tabs-tab {
+    font-weight: 500;
+    letter-spacing: 0.1px;
+}
+:root[data-material="true"] .ant-tabs-tab:hover {
+    background: var(--md-state-hover);
+}
+:root[data-material="true"] .ant-tabs-nav::before {
+    border-bottom-color: var(--md-sys-color-surface-container-highest) !important;
+}
+
+/* ------------------------------------------------------------ cartes, surfaces */
+
+/* Cartes « elevated » : conteneur bas + élévation 1, sans bordure ni séparateur d'en-tête */
+:root[data-material="true"] .ant-card {
+    border: none;
+    box-shadow: var(--md-sys-elevation-1);
+}
+:root[data-material="true"] .ant-card .ant-card {
+    box-shadow: none;
+    background: var(--md-sys-color-surface-container);
+}
+:root[data-material="true"] .ant-card-head {
+    border-bottom: none;
+}
+:root[data-material="true"] .ant-card-head-title {
+    font-weight: 500;
+    letter-spacing: 0.15px;
+}
+:root[data-material="true"] .ant-card-hoverable:hover {
+    box-shadow: var(--md-sys-elevation-2);
+}
+
+/* Tableaux */
+:root[data-material="true"] .ant-table-thead > tr > th {
+    font-weight: 500;
+    letter-spacing: 0.1px;
+}
+:root[data-material="true"] .ant-table-thead > tr > th::before {
+    display: none;
+}
+:root[data-material="true"] .ant-table {
+    background: transparent;
+}
+
+/* Descriptions */
+:root[data-material="true"] .ant-descriptions-bordered .ant-descriptions-view {
+    border-radius: 12px;
+}
+
+/* ------------------------------------------------------------ champs */
+
+:root[data-material="true"] :is(.ant-input-outlined, .ant-input-number-outlined, .ant-select-outlined .ant-select-selector, .ant-picker-outlined, .ant-select-outlined.ant-select) {
+    border-color: var(--md-sys-color-outline);
+}
+:root[data-material="true"] .ant-form-item-label > label {
+    color: var(--md-sys-color-on-surface-variant);
+    font-weight: 500;
+}
+:root[data-material="true"] .ant-form-item-extra,
+:root[data-material="true"] .ant-form-item-explain {
+    font-size: 12px;
+    letter-spacing: 0.4px;
+}
+:root[data-material="true"] .ant-select-selection-item {
+    font-weight: 400;
+}
+/* Puces (sélection multiple) */
+:root[data-material="true"] .ant-select-multiple .ant-select-selection-item {
+    border-radius: 8px;
+}
+
+/* Cases à cocher et boutons radio : bordure 2 px */
+:root[data-material="true"] .ant-checkbox-inner,
+:root[data-material="true"] .ant-radio-inner {
+    border-width: 2px;
+}
+
+/* Interrupteur : piste 52×32, poignée de 16 px (désactivé) à 24 px (activé) */
+:root[data-material="true"] .ant-switch {
+    background: var(--md-sys-color-surface-container-highest);
+    box-shadow: inset 0 0 0 2px var(--md-sys-color-outline);
+}
+:root[data-material="true"] .ant-switch:hover:not(.ant-switch-disabled) {
+    background: var(--md-sys-color-surface-container-highest);
+}
+:root[data-material="true"] .ant-switch .ant-switch-handle::before {
+    background: var(--md-sys-color-outline);
+    box-shadow: none;
+    transform: scale(0.667);
+    transition: transform 0.2s var(--md-ease), background-color 0.2s var(--md-ease);
+}
+:root[data-material="true"] .ant-switch.ant-switch-checked {
+    background: var(--md-sys-color-primary);
+    box-shadow: none;
+}
+:root[data-material="true"] .ant-switch.ant-switch-checked:hover:not(.ant-switch-disabled) {
+    background: var(--md-sys-color-primary);
+}
+:root[data-material="true"] .ant-switch.ant-switch-checked .ant-switch-handle::before {
+    background: var(--md-sys-color-on-primary);
+    transform: scale(1);
+}
+:root[data-material="true"] .ant-switch:active .ant-switch-handle::before {
+    transform: scale(1.1);
+}
+
+/* Téléversement (zone de dépôt) */
+:root[data-material="true"] .ant-upload-wrapper .ant-upload-drag {
+    border-radius: 12px;
+    border-color: var(--md-sys-color-outline);
+    background: var(--md-sys-color-surface-container-low);
+}
+
+/* ------------------------------------------------------------ boîtes de dialogue, feuilles, menus */
+
+:root[data-material="true"] .ant-modal .ant-modal-container,
+:root[data-material="true"] .ant-modal .ant-modal-content {
+    padding: 24px;
+    box-shadow: var(--md-sys-elevation-3);
+}
+:root[data-material="true"] .ant-modal .ant-modal-title {
+    font-weight: 400;
+}
+:root[data-material="true"] :is(.ant-modal-confirm-content, .ant-modal-body) {
+    color: var(--md-sys-color-on-surface-variant);
+}
+/* Actions des boîtes de dialogue : boutons texte */
+:root[data-material="true"] :is(.ant-modal-footer, .ant-modal-confirm-btns) .ant-btn:not(:disabled) {
+    background: transparent;
+    border-color: transparent;
+    color: var(--md-sys-color-primary);
+    padding-inline: 12px;
+}
+:root[data-material="true"] :is(.ant-modal-footer, .ant-modal-confirm-btns) .ant-btn:not(:disabled):hover {
+    background: color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent);
+    box-shadow: none;
+}
+:root[data-material="true"] :is(.ant-modal-footer, .ant-modal-confirm-btns) .ant-btn-color-dangerous:not(:disabled) {
+    color: var(--md-sys-color-error);
+}
+
+/* Feuille latérale (tiroir) */
+:root[data-material="true"] .ant-drawer-right > .ant-drawer-content-wrapper .ant-drawer-content,
+:root[data-material="true"] .ant-drawer-right .ant-drawer-section {
+    border-radius: 16px 0 0 16px;
+}
+:root[data-material="true"] .ant-drawer-header {
+    border-bottom: none;
+}
+:root[data-material="true"] .ant-drawer-title {
+    font-size: 22px;
+    font-weight: 400;
+}
+:root[data-material="true"] .ant-drawer-footer {
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+/* Menus déroulants et listes de choix */
+:root[data-material="true"] :is(.ant-dropdown-menu, .ant-select-dropdown, .ant-picker-dropdown .ant-picker-panel-container) {
+    border-radius: 4px;
+    padding-block: 8px;
+    box-shadow: var(--md-sys-elevation-2);
+}
+:root[data-material="true"] .ant-dropdown-menu-item {
+    border-radius: 0 !important;
+    min-height: 40px;
+    padding-inline: 12px !important;
+}
+:root[data-material="true"] .ant-dropdown-menu {
+    padding-inline: 0;
+}
+:root[data-material="true"] .ant-select-item-option {
+    border-radius: 0 !important;
+}
+
+/* Infobulles */
+:root[data-material="true"] .ant-tooltip-inner {
+    min-height: 24px;
+    padding: 4px 8px;
+    font-size: 12px;
+    letter-spacing: 0.4px;
+}
+
+/* Snackbar : messages en bas de l'écran */
+:root[data-material="true"] .ant-message {
+    top: auto !important;
+    bottom: 24px;
+}
+:root[data-material="true"] .ant-message-notice-content {
+    min-width: 288px;
+    max-width: 560px;
+    text-align: start;
+    box-shadow: var(--md-sys-elevation-3) !important;
+}
+:root[data-material="true"] .ant-message-custom-content {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+:root[data-material="true"] .ant-message .anticon {
+    color: var(--md-sys-color-inverse-primary) !important;
+}
+:root[data-material="true"] .ant-message-error .anticon {
+    color: color-mix(in srgb, var(--md-sys-color-error) 70%, var(--md-sys-color-inverse-on-surface)) !important;
+}
+
+/* Bandeaux : conteneurs tonals sans bordure */
+:root[data-material="true"] .ant-alert {
+    border: none;
+    border-radius: 12px;
+}
+:root[data-material="true"] .ant-alert-info {
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+}
+:root[data-material="true"] .ant-alert-success {
+    background: var(--md-sys-color-success-container);
+}
+:root[data-material="true"] .ant-alert-warning {
+    background: var(--md-sys-color-warning-container);
+}
+:root[data-material="true"] .ant-alert-error {
+    background: var(--md-sys-color-error-container);
+    color: var(--md-sys-color-on-error-container);
+}
+:root[data-material="true"] .ant-alert-title {
+    font-weight: 500;
+}
+
+/* Popconfirm */
+:root[data-material="true"] .ant-popover-inner {
+    padding: 16px 20px;
+    box-shadow: var(--md-sys-elevation-2);
+}
+
+/* Étiquettes → puces (« chips ») */
+:root[data-material="true"] .ant-tag {
+    border-radius: 8px;
+    padding-inline: 8px;
+    font-weight: 500;
+    letter-spacing: 0.1px;
+    line-height: 22px;
+    border-color: var(--md-sys-color-outline-variant);
+}
+:root[data-material="true"] .ant-tag-success {
+    background: var(--md-sys-color-success-container) !important;
+    color: var(--md-sys-color-success) !important;
+    border-color: transparent !important;
+}
+:root[data-material="true"] .ant-tag-warning,
+:root[data-material="true"] .ant-tag-gold {
+    background: var(--md-sys-color-warning-container) !important;
+    color: var(--md-sys-color-warning) !important;
+    border-color: transparent !important;
+}
+:root[data-material="true"] .ant-tag-error {
+    background: var(--md-sys-color-error-container) !important;
+    color: var(--md-sys-color-on-error-container) !important;
+    border-color: transparent !important;
+}
+:root[data-material="true"] .ant-tag-processing,
+:root[data-material="true"] .ant-tag-blue {
+    background: var(--md-sys-color-secondary-container) !important;
+    color: var(--md-sys-color-on-secondary-container) !important;
+    border-color: transparent !important;
+}
+
+
+/* Pagination */
+:root[data-material="true"] .ant-pagination-item {
+    border: none;
+}
+:root[data-material="true"] .ant-pagination-item-active a {
+    color: var(--md-sys-color-on-secondary-container) !important;
+}
+
+/* Barre de progression linéaire */
+:root[data-material="true"] .ant-progress-line .ant-progress-rail,
+:root[data-material="true"] .ant-progress-line .ant-progress-track {
+    border-radius: 2px;
+}
+
+/* Avatars */
+:root[data-material="true"] .ant-avatar {
+    font-weight: 500;
+}

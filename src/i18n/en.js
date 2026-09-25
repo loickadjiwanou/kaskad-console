@@ -26,7 +26,7 @@ export default {
         account: "My account",
         logout: "Sign out",
     },
-    theme: { light: "Light", system: "System", dark: "Dark" },
+    theme: { light: "Light", system: "System", dark: "Midnight", black: "Black" },
     roles: {
         admin: "Platform admin",
         owner: "Owner",
@@ -533,6 +533,9 @@ export default {
         profile: "Profile",
         preferences: "Preferences",
         theme: "Theme",
+        themeHelp: "“System” follows your computer's light / dark setting. “Black”: pure black background, ideal for OLED screens.",
+        material: "Material Design",
+        materialHelp: "Applies Google's Material Design 3 style to the whole console: tonal colors, rounded shapes, Roboto typography and ripple effects.",
         language: "Language",
         password: "Password",
         currentPassword: "Current password",

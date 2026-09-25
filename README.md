@@ -11,10 +11,12 @@ Anyone can **create a developer account** (sign up, then confirm the email addre
 - **Moderation** (platform admin): review requests from developers (approve / reject with a reason) and queue of versions being scanned, ready or rejected
 - **Categories:** create, edit (name + icon), reorder by drag and drop, delete (apps are moved to another category), move apps between categories
 - **Statistics:** downloads by period (preset or custom range, daily / weekly / monthly), per app and per version, breakdown by platform and format, CSV export
-- **Activity log:** who did what and when, filtered by type or member
+- **Activity log** (account owner and platform admin): who did what and when in the account — members' actions, review decisions and scan results — filtered by type or member (and by account for the platform admin)
 - **Team** (account owner): invite members by email, change roles (developer / viewer), deactivate access, rename the account
 - **Developer accounts** (platform admin): every registered account with its owner, members and apps
-- Light / dark / system theme, French and English
+- Themes: Light, Midnight (dark blue), Black (pure black, for OLED screens) or System, like the mobile app
+- **Material Design** option (*My account › Preferences*): Google's Material Design 3 across the whole console — tonal color roles generated from the Kaskad blue (`@material/material-color-utilities`), Roboto typography, M3 shapes (pill buttons and navigation indicator, 28 px dialogs, side sheets), segmented buttons, switches, chips, snackbars and ripple effects; works with all three themes
+- French and English
 
 ### Accounts, roles and review workflow
 

@@ -26,7 +26,7 @@ export default {
         account: "Mon compte",
         logout: "Se déconnecter",
     },
-    theme: { light: "Clair", system: "Système", dark: "Sombre" },
+    theme: { light: "Clair", system: "Système", dark: "Bleu nuit", black: "Noir" },
     roles: {
         admin: "Administrateur de la plateforme",
         owner: "Propriétaire",
@@ -533,6 +533,9 @@ export default {
         profile: "Profil",
         preferences: "Préférences",
         theme: "Thème",
+        themeHelp: "« Système » suit le réglage clair / sombre de votre ordinateur. « Noir » : fond noir pur, idéal pour les écrans OLED.",
+        material: "Material Design",
+        materialHelp: "Applique le style Material Design 3 de Google à toute la console : couleurs tonales, formes arrondies, typographie Roboto et effets d'onde.",
         language: "Langue",
         password: "Mot de passe",
         currentPassword: "Mot de passe actuel",

@@ -1,55 +1,75 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { theme as antdTheme } from "antd";
 import { load, save } from "@/lib/storage";
+import { KASKAD, SCHEMES } from "./colors";
+import { ELEVATION, materialAntdTheme, materialColors } from "./material";
 import palette from "./palette";
+import { installRipple } from "./ripple";
 
 export { palette };
 
-const KEY = "kaskad.console.theme";
+const MODE_KEY = "kaskad.console.theme";
+const MATERIAL_KEY = "kaskad.console.material";
+export const MODES = ["light", "system", "dark", "black"];
 
-// Jetons Ant Design aux couleurs Kaskad
-export function antdThemeFor(dark) {
+/**
+ * Thème Ant Design : apparence Kaskad ou Material Design 3,
+ * pour le schéma « light » (clair), « dark » (bleu nuit) ou « black » (noir).
+ */
+export function antdThemeFor(scheme, material) {
+    const algorithm = scheme === "light" ? antdTheme.defaultAlgorithm : antdTheme.darkAlgorithm;
+    if (material) return materialAntdTheme(scheme, algorithm);
+    const c = KASKAD[scheme];
     return {
-        algorithm: dark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
+        algorithm,
         token: {
-            colorPrimary: dark ? palette.primary.lighter : palette.primary.DEFAULT,
+            colorPrimary: c.primary,
             colorInfo: palette.semantic.info,
             colorSuccess: palette.semantic.success,
             colorWarning: palette.semantic.warning,
             colorError: palette.semantic.danger,
-            colorLink: dark ? palette.primary.lighter : palette.primary.DEFAULT,
-            colorBgBase: dark ? palette.dark.background : "#ffffff",
-            colorBgLayout: dark ? palette.neutral[950] : palette.neutral[100],
-            colorBgContainer: dark ? palette.dark.surface : "#ffffff",
-            colorBorderSecondary: dark ? palette.dark.border : palette.light.border,
-            colorTextBase: dark ? palette.dark.textPrimary : palette.light.textPrimary,
+            colorLink: c.primary,
+            colorBgBase: scheme === "light" ? "#ffffff" : c.layout,
+            colorBgLayout: c.layout,
+            colorBgContainer: c.container,
+            colorBgElevated: c.elevated,
+            colorBorderSecondary: c.border,
+            colorTextBase: c.text,
+            colorTextSecondary: c.textSecondary,
             fontFamily: "Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
             borderRadius: 10,
             borderRadiusLG: 14,
             controlHeight: 38,
         },
         components: {
-            Layout: {
-                siderBg: dark ? palette.neutral[950] : "#ffffff",
-                headerBg: dark ? palette.neutral[950] : "#ffffff",
-                bodyBg: dark ? palette.neutral[950] : palette.neutral[100],
-            },
+            Layout: { siderBg: c.chrome, headerBg: c.chrome, bodyBg: c.layout },
             Menu: {
                 itemBg: "transparent",
-                itemSelectedBg: dark ? "#1E2F55" : "#E8F0FF",
-                itemSelectedColor: dark ? palette.primary.lighter : palette.primary.DEFAULT,
+                itemSelectedBg: c.selectedBg,
+                itemSelectedColor: c.primary,
                 itemBorderRadius: 10,
             },
             Card: { headerFontSize: 15 },
-            Table: { headerBg: dark ? palette.dark.surface : palette.neutral[50] },
+            Table: { headerBg: c.tableHeader },
+            Modal: { contentBg: c.elevated, headerBg: c.elevated },
         },
     };
+}
+
+/** Couleur de fond de la page (avant le rendu d'Ant Design). */
+function pageBackground(scheme, material) {
+    return material ? materialColors(scheme).surface : KASKAD[scheme].layout;
 }
 
 const ThemeContext = createContext(null);
 
 export function ThemeModeProvider({ children }) {
-    const [mode, setModeState] = useState(() => load(KEY, "system")); // system | light | dark
+    // light | system | dark (bleu nuit) | black (noir)
+    const [mode, setModeState] = useState(() => {
+        const stored = load(MODE_KEY, "system");
+        return MODES.includes(stored) ? stored : "system";
+    });
+    const [material, setMaterialState] = useState(() => load(MATERIAL_KEY, false) === true);
     const [systemDark, setSystemDark] = useState(() => window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false);
 
     useEffect(() => {
@@ -60,22 +80,43 @@ export function ThemeModeProvider({ children }) {
         return () => mq.removeEventListener("change", onChange);
     }, []);
 
-    const dark = mode === "dark" || (mode === "system" && systemDark);
+    const scheme = mode === "system" ? (systemDark ? "dark" : "light") : mode;
+    const dark = scheme !== "light";
+
     useEffect(() => {
-        document.documentElement.style.colorScheme = dark ? "dark" : "light";
-        document.body.style.background = dark ? palette.neutral[950] : palette.neutral[100];
-    }, [dark]);
+        const root = document.documentElement;
+        root.style.colorScheme = dark ? "dark" : "light";
+        root.dataset.scheme = scheme;
+        root.dataset.material = String(material);
+        document.body.style.background = pageBackground(scheme, material);
+        if (!material) return;
+        // Rôles de couleur exposés en variables CSS (--md-sys-color-*) pour la feuille Material
+        const c = materialColors(scheme);
+        for (const [role, value] of Object.entries(c)) {
+            root.style.setProperty(`--md-sys-color-${role.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`)}`, value);
+        }
+        for (const [level, value] of Object.entries(ELEVATION)) root.style.setProperty(`--md-sys-elevation-${level}`, value);
+    }, [scheme, dark, material]);
+
+    // Effet d'onde au toucher, uniquement en Material Design
+    useEffect(() => (material ? installRipple() : undefined), [material]);
 
     const value = useMemo(
         () => ({
             mode,
+            scheme,
             dark,
+            material,
             setMode: (m) => {
-                save(KEY, m);
+                save(MODE_KEY, m);
                 setModeState(m);
             },
+            setMaterial: (on) => {
+                save(MATERIAL_KEY, on);
+                setMaterialState(on);
+            },
         }),
-        [mode, dark],
+        [mode, scheme, dark, material],
     );
     return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
@@ -83,3 +124,5 @@ export function ThemeModeProvider({ children }) {
 export function useThemeMode() {
     return useContext(ThemeContext);
 }
+
+export { SCHEMES };

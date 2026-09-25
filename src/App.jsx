@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { App as AntApp, ConfigProvider } from "antd";
 import enUS from "antd/locale/en_US";
 import frFR from "antd/locale/fr_FR";
@@ -45,10 +46,12 @@ function RequireTeamManager({ children }) {
 }
 
 function Themed({ children }) {
-    const { dark } = useThemeMode();
+    const { scheme, material } = useThemeMode();
     const { lang } = useI18n();
+    const theme = useMemo(() => antdThemeFor(scheme, material), [scheme, material]);
     return (
-        <ConfigProvider theme={antdThemeFor(dark)} locale={lang === "fr" ? frFR : enUS}>
+        // Material Design : l'onde d'Ant Design est remplacée par l'effet d'onde Material (theme/ripple.js)
+        <ConfigProvider theme={theme} wave={{ disabled: material }} locale={lang === "fr" ? frFR : enUS}>
             <AntApp>{children}</AntApp>
         </ConfigProvider>
     );
@@ -94,7 +97,14 @@ export default function App() {
                                             }
                                         />
                                         <Route path="stats" element={<Stats />} />
-                                        <Route path="activity" element={<Activity />} />
+                                        <Route
+                                            path="activity"
+                                            element={
+                                                <RequireTeamManager>
+                                                    <Activity />
+                                                </RequireTeamManager>
+                                            }
+                                        />
                                         <Route
                                             path="team"
                                             element={
